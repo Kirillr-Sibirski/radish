@@ -86,19 +86,7 @@ export default function App() {
   async function onEstimateLoan(values: z.infer<typeof formSchema>) {
     console.log(values.amount1);
     const result = await rdt.walletApi.sendTransaction({
-      transactionManifest: `
-    CALL_METHOD
-      Address("component_sim1cptxxxxxxxxxfaucetxxxxxxxxx000527798379xxxxxxxxxhkrefh")
-      "lock_fee"
-      Decimal("5");
-    CALL_METHOD
-      Address("component_sim1cpwu4wc6rg0am8l9prnh2lzqkk6hue6stzqhdx48rzvek2mmm5vp0p")
-      "estimate_loan"
-      Map<Address, Decimal>(
-        Address("resource_sim1tknxxxxxxxxxradxrdxxxxxxxxx009923554798xxxxxxxxxakj8n3") => Decimal("96")
-    )
-;
-    `,
+      transactionManifest: "",
     })
     console.log("result: ", result)
     setRadishAmount(0) //set the amount of radish returned by the contract
