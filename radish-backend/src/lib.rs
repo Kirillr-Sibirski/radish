@@ -3,8 +3,6 @@ use scrypto::prelude::*;
 
 
 /* ------------------- Misc. ------------------ */
-type LazySet<K> = KeyValueStore<K, ()>;
-
 #[derive(NonFungibleData, ScryptoSbor, Clone)]
 struct Borrower {
     #[mutable]
