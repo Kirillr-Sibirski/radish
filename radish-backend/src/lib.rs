@@ -1,14 +1,25 @@
+/* ------------------ Imports ----------------- */
 use scrypto::prelude::*;
 
+
+/* ------------------- Misc. ------------------ */
 type LazySet<K> = KeyValueStore<K, ()>;
 
 #[derive(NonFungibleData, ScryptoSbor, Clone)]
 struct Borrower {
-    collateral: Vec<Decimal>,
-    loan_amount: Decimal,
+    collateral: HashMap<ResourceAddress, Decimal>,
+    debt: Decimal,
 }
 
+#[derive(ScryptoSbor, ScryptoEvent)]
+struct EstimateLoanEvent {
+    value: Decimal,
+}
+
+
+/* ----------------- Blueprint ---------------- */
 #[blueprint]
+#[events(EstimateLoanEvent)]
 mod radish {
     enable_method_auth! {
         roles {
@@ -127,28 +138,6 @@ mod radish {
         }
 
         pub fn estimate_loan(&self, collateral: HashMap<ResourceAddress, Decimal>) -> Decimal {
-            // info!("[estimate_loan] collateral: {:?}", collateral);
-
-            // // Function Validation
-            // assert!(self.placeholder_oracle_collateral_prices.get(&self.radish_resource).is_some(), "RSH price not tracked by oracle");
-
-            // for bucket in &collateral {
-            //     assert!(self.collateral_vaults.get(&bucket.resource_address()).is_some(), "Invalid resource provided as collateral");
-            //     assert!(self.placeholder_oracle_collateral_prices.get(&bucket.resource_address()).is_some(), "Invalid oracle does not track provided collateral price");
-            //     assert!(bucket.amount() >= Decimal::ZERO, "Bucket somehow less than 0");
-            // }
-
-            // let mut estimated_usd: Decimal = dec!(0.0);
-
-            // for bucket in &collateral {
-            //     estimated_usd += bucket.amount() * *self.placeholder_oracle_collateral_prices.get(&bucket.resource_address()).unwrap();
-            // }
-            
-            // let estimated_rsh: Decimal = estimated_usd / *self.placeholder_oracle_collateral_prices.get(&self.radish_resource).unwrap();
-            
-            // info!("Collateral in USD: {:?}\nCollateral in RSH: {:?}", estimated_usd, estimated_rsh);
-            // estimated_rsh
-
             info!("[estimate_loan] collateral: {:?}", collateral);
 
             /* ---------------- Validation ---------------- */
@@ -171,7 +160,10 @@ mod radish {
             
             let estimated_rsh: Decimal = estimated_usd / *self.placeholder_oracle_collateral_prices.get(&self.radish_resource).unwrap();
             
+            /* ------------------ Return ------------------ */
             info!("Collateral in USD: {:?}\nCollateral in RSH: {:?}", estimated_usd, estimated_rsh);
+
+            Runtime::emit_event(EstimateLoanEvent { value: estimated_rsh.clone() });
             estimated_rsh
         }
 
