@@ -90,13 +90,13 @@ export default function App() {
     CALL_METHOD
       Address("component_sim1cptxxxxxxxxxfaucetxxxxxxxxx000527798379xxxxxxxxxhkrefh")
       "lock_fee"
-      Decimal("5000");
+      Decimal("5");
     CALL_METHOD
       Address("component_sim1cpwu4wc6rg0am8l9prnh2lzqkk6hue6stzqhdx48rzvek2mmm5vp0p")
       "estimate_loan"
       Map<Address, Decimal>(
         Address("resource_sim1tknxxxxxxxxxradxrdxxxxxxxxx009923554798xxxxxxxxxakj8n3") => Decimal("96")
-      )
+    )
 ;
     `,
     })
