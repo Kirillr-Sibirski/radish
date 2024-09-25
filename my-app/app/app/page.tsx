@@ -22,6 +22,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card"
 
 // Zod schema for four independent "amount" fields
 const formSchema = z.object({
@@ -91,38 +99,45 @@ export default function App() {
         <main className="p-4">
           <div className="h-[40rem] flex justify-center items-center px-4">
             <div className="text-4xl mx-auto font-normal text-neutral-600 dark:text-neutral-400">
-              <h1>Deposit Radish</h1>
-              <Form {...form}>
-                <form className="space-y-8">
-                  <FormItem>
-                    <FormLabel>Radish Amount</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="number"
-                        placeholder="Enter Radish amount"
-                        value={radishAmount}
-                        onChange={(e) => setRadishAmount(parseFloat(e.target.value) || 0)}
-                        className="w-[200px]"
-                      />
-                    </FormControl>
-                  </FormItem>
+              <Card>
+                <CardHeader>
+                  <CardTitle>Withdraw Collateral</CardTitle>
+                  <CardDescription>Input the amount of Radish you want to deposit, estimate the amount of each asset that you will get back, and withdraw the assets.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Form {...form}>
+                    <form className="space-y-8">
+                      <FormItem>
+                        <FormLabel>Radish Amount</FormLabel>
+                        <FormControl>
+                          <Input
+                            type="number"
+                            placeholder="Enter Radish amount"
+                            value={radishAmount}
+                            onChange={(e) => setRadishAmount(parseFloat(e.target.value) || 0)}
+                            className="w-[200px]"
+                          />
+                        </FormControl>
+                      </FormItem>
 
-                  {/* Estimate button */}
-                  <Button onClick={handleEstimateWithdraw}>Estimate</Button>
+                      {/* Estimate button */}
+                      <Button onClick={handleEstimateWithdraw}>Estimate</Button>
 
-                  {/* Output for the estimated value */}
-                  {estimatedValueWithdraw > 0 && (
-                    <div className="mt-4">
-                      <p>Estimated value: {estimatedValueWithdraw} Radish</p>
-                    </div>
-                  )}
+                      {/* Output for the estimated value */}
+                      {estimatedValueWithdraw > 0 && (
+                        <div className="mt-4">
+                          <p>Estimated value: {estimatedValueWithdraw} Radish</p>
+                        </div>
+                      )}
 
-                  {/* Withdraw button */}
-                  <div className="mt-4">
-                    <Button onClick={handleWithdraw}>Withdraw</Button>
-                  </div>
-                </form>
-              </Form>
+                      {/* Withdraw button */}
+                      <div className="mt-4">
+                        <Button onClick={handleWithdraw}>Withdraw</Button>
+                      </div>
+                    </form>
+                  </Form>
+                </CardContent>
+              </Card>
             </div>
           </div>
         </main>
@@ -137,148 +152,156 @@ export default function App() {
       <main className="p-4">
         <div className="h-[40rem] flex justify-center items-center px-4">
           <div className="text-4xl mx-auto font-normal text-neutral-600 dark:text-neutral-400">
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onEstimateLoan)} className="space-y-8">
+            <Card>
+              <CardHeader>
+                <CardTitle>Deposit Collateral</CardTitle>
+                <CardDescription>Choose max 3 assets of your choice, estimate loan in Radish, and deposit collateral in the assets of your choice.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Form {...form}>
+                  <form onSubmit={form.handleSubmit(onEstimateLoan)} className="space-y-8">
 
-                {/* First Input Field */}
-                <FormField
-                  control={form.control}
-                  name="amount1" // Field for first amount
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Deposit Asset 1</FormLabel>
-                      <div className="flex items-center space-x-4">
-                        <Select
-                          onValueChange={(value) =>
-                            setSelectedAssets((prev) => ({
-                              ...prev,
-                              field1: value,
-                            }))
-                          }
-                          defaultValue={selectedAssets.field1}
-                        >
-                          <SelectTrigger className="w-[120px]">
-                            <SelectValue placeholder="Select asset" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="RND">RND</SelectItem>
-                            <SelectItem value="RAD">RAD</SelectItem>
-                            <SelectItem value="HUD">HUD</SelectItem>
-                            <SelectItem value="None">None</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormControl>
-                          <Input
-                            type="number"
-                            placeholder="amount"
-                            value={field.value || ''}
-                            onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)} // Parsing string input to number
-                          />
-                        </FormControl>
+                    {/* First Input Field */}
+                    <FormField
+                      control={form.control}
+                      name="amount1" // Field for first amount
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Deposit Asset 1</FormLabel>
+                          <div className="flex items-center space-x-4">
+                            <Select
+                              onValueChange={(value) =>
+                                setSelectedAssets((prev) => ({
+                                  ...prev,
+                                  field1: value,
+                                }))
+                              }
+                              defaultValue={selectedAssets.field1}
+                            >
+                              <SelectTrigger className="w-[120px]">
+                                <SelectValue placeholder="Select asset" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="RND">RND</SelectItem>
+                                <SelectItem value="RAD">RAD</SelectItem>
+                                <SelectItem value="HUD">HUD</SelectItem>
+                                <SelectItem value="None">None</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormControl>
+                              <Input
+                                type="number"
+                                placeholder="amount"
+                                value={field.value || ''}
+                                onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)} // Parsing string input to number
+                              />
+                            </FormControl>
+                          </div>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    {/* Second Input Field */}
+                    <FormField
+                      control={form.control}
+                      name="amount2" // Field for second amount
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Deposit Asset 2</FormLabel>
+                          <div className="flex items-center space-x-4">
+                            <Select
+                              onValueChange={(value) =>
+                                setSelectedAssets((prev) => ({
+                                  ...prev,
+                                  field2: value,
+                                }))
+                              }
+                              defaultValue={selectedAssets.field2}
+                            >
+                              <SelectTrigger className="w-[120px]">
+                                <SelectValue placeholder="Select asset" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="RND">RND</SelectItem>
+                                <SelectItem value="RAD">RAD</SelectItem>
+                                <SelectItem value="HUD">HUD</SelectItem>
+                                <SelectItem value="None">None</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormControl>
+                              <Input
+                                type="number"
+                                placeholder="amount"
+                                value={field.value || ''}
+                                onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)} // Parsing string input to number
+                              />
+                            </FormControl>
+                          </div>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    {/* Third Input Field */}
+                    <FormField
+                      control={form.control}
+                      name="amount3" // Field for third amount
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Deposit Asset 3</FormLabel>
+                          <div className="flex items-center space-x-4">
+                            <Select
+                              onValueChange={(value) =>
+                                setSelectedAssets((prev) => ({
+                                  ...prev,
+                                  field3: value,
+                                }))
+                              }
+                              defaultValue={selectedAssets.field3}
+                            >
+                              <SelectTrigger className="w-[120px]">
+                                <SelectValue placeholder="Select asset" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="RND">RND</SelectItem>
+                                <SelectItem value="RAD">RAD</SelectItem>
+                                <SelectItem value="HUD">HUD</SelectItem>
+                                <SelectItem value="None">None</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            <FormControl>
+                              <Input
+                                type="number"
+                                placeholder="amount"
+                                value={field.value || ''}
+                                onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)} // Parsing string input to number
+                              />
+                            </FormControl>
+                          </div>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <Button type="submit">Estimate Loan</Button>
+
+                    {radishAmountReturned > 0 && (
+                      <div className="mt-4">
+                        <p>Estimated value: {radishAmountReturned} Radish</p>
                       </div>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                    )}
 
-                {/* Second Input Field */}
-                <FormField
-                  control={form.control}
-                  name="amount2" // Field for second amount
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Deposit Asset 2</FormLabel>
-                      <div className="flex items-center space-x-4">
-                        <Select
-                          onValueChange={(value) =>
-                            setSelectedAssets((prev) => ({
-                              ...prev,
-                              field2: value,
-                            }))
-                          }
-                          defaultValue={selectedAssets.field2}
-                        >
-                          <SelectTrigger className="w-[120px]">
-                            <SelectValue placeholder="Select asset" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="RND">RND</SelectItem>
-                            <SelectItem value="RAD">RAD</SelectItem>
-                            <SelectItem value="HUD">HUD</SelectItem>
-                            <SelectItem value="None">None</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormControl>
-                          <Input
-                            type="number"
-                            placeholder="amount"
-                            value={field.value || ''}
-                            onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)} // Parsing string input to number
-                          />
-                        </FormControl>
-                      </div>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
+                    <div className="mt-4">
+                      <Button type="button" onClick={() => onDepositAssets(form.getValues())}>
+                        Deposit Assets
+                      </Button>
+                    </div>
 
-                {/* Third Input Field */}
-                <FormField
-                  control={form.control}
-                  name="amount3" // Field for third amount
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Deposit Asset 3</FormLabel>
-                      <div className="flex items-center space-x-4">
-                        <Select
-                          onValueChange={(value) =>
-                            setSelectedAssets((prev) => ({
-                              ...prev,
-                              field3: value,
-                            }))
-                          }
-                          defaultValue={selectedAssets.field3}
-                        >
-                          <SelectTrigger className="w-[120px]">
-                            <SelectValue placeholder="Select asset" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="RND">RND</SelectItem>
-                            <SelectItem value="RAD">RAD</SelectItem>
-                            <SelectItem value="HUD">HUD</SelectItem>
-                            <SelectItem value="None">None</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        <FormControl>
-                          <Input
-                            type="number"
-                            placeholder="amount"
-                            value={field.value || ''}
-                            onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)} // Parsing string input to number
-                          />
-                        </FormControl>
-                      </div>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <Button type="submit">Estimate Loan</Button>
-
-                {radishAmountReturned > 0 && (
-                  <div className="mt-4">
-                    <p>Estimated value: {radishAmountReturned} Radish</p>
-                  </div>
-                )}
-
-                <div className="mt-4">
-                  <Button type="button" onClick={() => onDepositAssets(form.getValues())}>
-                    Deposit Assets
-                  </Button>
-                </div>
-
-              </form>
-            </Form>
+                  </form>
+                </Form>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </main>
