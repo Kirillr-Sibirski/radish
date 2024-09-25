@@ -131,6 +131,9 @@ mod radish {
             .prepare_to_globalize(OwnerRole::Fixed(rule!(require(
                 owner_badge.resource_address()
             ))))
+            .roles(roles!(
+                borrower => rule!(require(borrower_manager.address()));
+            ))
             .with_address(address_reservation)
             .globalize();
 
@@ -197,6 +200,8 @@ mod radish {
             (borrower_badge, self.radish_vault.take(estimated_rsh))
         }
 
-        pub fn repay_loan(&mut self) {}
+        pub fn repay_loan(&mut self) {
+            
+        }
     }
 }
