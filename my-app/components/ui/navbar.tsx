@@ -3,27 +3,26 @@ import Image from 'next/image';
 
 export default function Navbar() {
     return (
-        <nav className="bg-background shadow-md">
+        <nav style={{ backgroundColor: '#fcfff7' }} className="shadow-md">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex justify-between h-16">
                     <div className="flex items-center">
-                        <Link href="/" className="text-xl font-semibold text-gray-800">
+                        <Link href="/" style={{ color: '#070707' }} className="text-xl font-semibold">
                             <Image
                                 src="/logo.png" // Path to your logo in the public folder
                                 alt="Logo"
-                                width={40} // Adjust the width of your logo
-                                height={40} // Adjust the height of your logo
+                                width={50} // Adjust the width of your logo
+                                height={50} // Adjust the height of your logo
                                 className="cursor-pointer"
                             />
                         </Link>
                     </div>
 
                     <div className="hidden md:flex items-center space-x-4">
-                        <Link href="/app" className="text-gray-600 hover:text-gray-900">
+                        <Link href="/app" style={{ color: '#070707' }} className="hover:text-fb3640">
                             App
                         </Link>
                         <div dangerouslySetInnerHTML={{ __html: "<radix-connect-button></radix-connect-button>" }}></div>
-                        {/* </radix-connect-button> */}
                     </div>
 
                     <div className="flex md:hidden items-center">

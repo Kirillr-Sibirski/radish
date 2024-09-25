@@ -29,14 +29,17 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card"
+} from "@/components/ui/card";
+import { ShootingStars } from "@/components/ui/shooting-stars";
+import { StarsBackground } from "@/components/ui/stars-background";
 import {
   DataRequestBuilder,
   RadixDappToolkit,
   RadixNetwork,
   Logger,
 } from "@radixdlt/radix-dapp-toolkit";
-import {generateEstimateLoan} from "../manifests";
+import { generateEstimateLoan } from "../manifests";
+import { GatewayApiClient } from "@radixdlt/babylon-gateway-api-sdk";
 
 // Zod schema for four independent "amount" fields
 const formSchema = z.object({
@@ -47,6 +50,7 @@ const formSchema = z.object({
 });
 
 export default function App() {
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -58,7 +62,7 @@ export default function App() {
   });
 
   const [selectedAssets, setSelectedAssets] = useState({
-    field1: "RND",
+    field1: "XRD",
     field2: "RAD",
     field3: "HUD",
     field4: "None", // Initial value for the fourth field
@@ -69,54 +73,62 @@ export default function App() {
   const [estimatedValueWithdraw, setEstimatedValueWithdraw] = useState(0);
   const [radishAmount, setRadishAmount] = useState(0); // Amount to deposit
 
-  const componentAddress = "_RADISH_COMPONENT_ADDRESS_"; // Radiswap component address on Stokenet
+  const componentAddress = "component_tdx_2_1crxwj8t0y54sk4kyfl6xlxhzff7tfjecqetexeqhc29xp5vydtcj3u";
   const rdt = RadixDappToolkit({
-    dAppDefinitionAddress:
-      '',
+    dAppDefinitionAddress: "account_tdx_2_128zw2yyy9t9966h2eakq8rhedwfwaylfaz53v84fpaq2jeq8y2eaj8", // invalid address
     networkId: RadixNetwork.Stokenet,
-    applicationName: 'Radix Web3 dApp',
-    applicationVersion: '1.0.0',
-    logger: Logger(1)
-  })
+    applicationName: "Radish",
+    applicationVersion: "1.0.0",
+    logger: Logger(1),
+  }); 
+  const gatewayApi = GatewayApiClient.initialize(rdt.gatewayApi.clientConfig);
 
   useEffect(() => {
-    // check if the user has loan NFT
+    // Does the user own any
   }, []);
 
   // Function to handle form submission
   async function onEstimateLoan(values: z.infer<typeof formSchema>) {
     const mapCoins = new Map<string, number>([
-      ["address1", values.amount1 ?? 0],
-      ["address2", values.amount2 ?? 0],
-      ["address3", values.amount3 ?? 0]
+      ["resource_tdx_2_1tknxxxxxxxxxradxrdxxxxxxxxx009923554798xxxxxxxxxtfd2jc", values.amount1 ?? 0], //XRD
     ]);
+    console.log("!!!!!!!!!!!!!!!!!!!!!!!!!!!", generateEstimateLoan(componentAddress, mapCoins));
     const result = await rdt.walletApi.sendTransaction({
       transactionManifest: generateEstimateLoan(componentAddress, mapCoins),
-    })
-    console.log("result: ", result)
-    setRadishAmount(0) //set the amount of radish returned by the contract
+    });
+    if(result.isErr()) throw result.error;
+    const committedDetails = await gatewayApi.transaction.getCommittedDetails(
+      result.value.transactionIntentHash
+    );
+    console.log("Instantiate committed details:", committedDetails);
+    console.log("result: ", result);
+    setRadishAmount(0); // Set the amount of Radish returned by the contract
   }
 
   // Function to handle Deposit Assets
-  function onDepositAssets(values: z.infer<typeof formSchema>) {
-    console.log(values);
-    alert(`Deposited assets. You get Radish.`);
+  async function onDepositAssets(values: z.infer<typeof formSchema>) {
+    const mapCoins = new Map<string, number>([
+      ["address1", values.amount1 ?? 0], //XRD
+    ]);
+    const result = await rdt.walletApi.sendTransaction({
+      transactionManifest: "", // Call on deposit function
+    });
+    console.log("result: ", result);
+    alert(`Successful collateral deposit.`);
   }
 
   const handleEstimateWithdraw = () => {
-    // Simulate an estimate calculation (e.g., Radish * 1.2 for example)
     const estimate = radishAmount * 1.2;
     setEstimatedValueWithdraw(estimate);
   };
 
-  // Function to handle withdrawal (dummy function)
   const handleWithdraw = () => {
     alert("Withdraw initiated!");
   };
 
   if (userHasLoan) {
     return (
-      <div>
+      <div style={{ backgroundColor: "#fcfff7", color: "#070707" }}>
         <Navbar />
         <main className="p-4">
           <div className="h-[40rem] flex justify-center items-center px-4">
@@ -124,7 +136,11 @@ export default function App() {
               <Card>
                 <CardHeader>
                   <CardTitle>Withdraw Collateral</CardTitle>
-                  <CardDescription>Input the amount of Radish you want to deposit, estimate the amount of each asset that you will get back, and withdraw the assets.</CardDescription>
+                  <CardDescription>
+                    Input the amount of Radish you want to deposit, estimate the
+                    amount of each asset that you will get back, and withdraw
+                    the assets.
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
                   <Form {...form}>
@@ -136,25 +152,40 @@ export default function App() {
                             type="number"
                             placeholder="Enter Radish amount"
                             value={radishAmount}
-                            onChange={(e) => setRadishAmount(parseFloat(e.target.value) || 0)}
+                            onChange={(e) =>
+                              setRadishAmount(parseFloat(e.target.value) || 0)
+                            }
                             className="w-[200px]"
                           />
                         </FormControl>
                       </FormItem>
 
-                      {/* Estimate button */}
-                      <Button onClick={handleEstimateWithdraw}>Estimate</Button>
+                      <Button
+                        style={{
+                          backgroundColor: "#fb3640",
+                          color: "#fcfff7",
+                        }}
+                        onClick={handleEstimateWithdraw}
+                      >
+                        Estimate
+                      </Button>
 
-                      {/* Output for the estimated value */}
                       {estimatedValueWithdraw > 0 && (
                         <div className="mt-4">
                           <p>Estimated value: {estimatedValueWithdraw} Radish</p>
                         </div>
                       )}
 
-                      {/* Withdraw button */}
                       <div className="mt-4">
-                        <Button onClick={handleWithdraw}>Withdraw</Button>
+                        <Button
+                          style={{
+                            backgroundColor: "#fb3640",
+                            color: "#fcfff7",
+                          }}
+                          onClick={handleWithdraw}
+                        >
+                          Withdraw
+                        </Button>
                       </div>
                     </form>
                   </Form>
@@ -167,27 +198,30 @@ export default function App() {
     );
   }
 
-  // Original content when the userHasLoan is false
   return (
-    <div>
+    <div style={{ backgroundColor: "#fcfff7", color: "#070707" }}>
       <Navbar />
-      {/* <radix-connect-button /> */}
       <main className="p-4">
         <div className="h-[40rem] flex justify-center items-center px-4">
-          <div className="text-4xl mx-auto font-normal text-neutral-600 dark:text-neutral-400">
+          <div className="text-4xl mx-auto font-normal">
             <Card>
               <CardHeader>
                 <CardTitle>Deposit Collateral</CardTitle>
-                <CardDescription>Choose max 3 assets of your choice, estimate loan in Radish, and deposit collateral in the assets of your choice.</CardDescription>
+                <CardDescription>
+                  Choose max 3 assets of your choice, estimate loan in Radish,
+                  and deposit collateral in the assets of your choice.
+                </CardDescription>
               </CardHeader>
               <CardContent>
                 <Form {...form}>
-                  <form onSubmit={form.handleSubmit(onEstimateLoan)} className="space-y-8">
-
+                  <form
+                    onSubmit={form.handleSubmit(onEstimateLoan)}
+                    className="space-y-8"
+                  >
                     {/* First Input Field */}
                     <FormField
                       control={form.control}
-                      name="amount1" // Field for first amount
+                      name="amount1"
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Deposit Asset 1</FormLabel>
@@ -205,7 +239,7 @@ export default function App() {
                                 <SelectValue placeholder="Select asset" />
                               </SelectTrigger>
                               <SelectContent>
-                                <SelectItem value="RND">RND</SelectItem>
+                                <SelectItem value="XRD">XRD</SelectItem>
                                 <SelectItem value="RAD">RAD</SelectItem>
                                 <SelectItem value="HUD">HUD</SelectItem>
                                 <SelectItem value="None">None</SelectItem>
@@ -215,8 +249,12 @@ export default function App() {
                               <Input
                                 type="number"
                                 placeholder="amount"
-                                value={field.value || ''}
-                                onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)} // Parsing string input to number
+                                value={field.value || ""}
+                                onChange={(e) =>
+                                  field.onChange(
+                                    parseFloat(e.target.value) || 0
+                                  )
+                                }
                               />
                             </FormControl>
                           </div>
@@ -228,7 +266,7 @@ export default function App() {
                     {/* Second Input Field */}
                     <FormField
                       control={form.control}
-                      name="amount2" // Field for second amount
+                      name="amount2"
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Deposit Asset 2</FormLabel>
@@ -246,7 +284,7 @@ export default function App() {
                                 <SelectValue placeholder="Select asset" />
                               </SelectTrigger>
                               <SelectContent>
-                                <SelectItem value="RND">RND</SelectItem>
+                                <SelectItem value="XRD">XRD</SelectItem>
                                 <SelectItem value="RAD">RAD</SelectItem>
                                 <SelectItem value="HUD">HUD</SelectItem>
                                 <SelectItem value="None">None</SelectItem>
@@ -256,8 +294,12 @@ export default function App() {
                               <Input
                                 type="number"
                                 placeholder="amount"
-                                value={field.value || ''}
-                                onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)} // Parsing string input to number
+                                value={field.value || ""}
+                                onChange={(e) =>
+                                  field.onChange(
+                                    parseFloat(e.target.value) || 0
+                                  )
+                                }
                               />
                             </FormControl>
                           </div>
@@ -269,7 +311,7 @@ export default function App() {
                     {/* Third Input Field */}
                     <FormField
                       control={form.control}
-                      name="amount3" // Field for third amount
+                      name="amount3"
                       render={({ field }) => (
                         <FormItem>
                           <FormLabel>Deposit Asset 3</FormLabel>
@@ -287,7 +329,7 @@ export default function App() {
                                 <SelectValue placeholder="Select asset" />
                               </SelectTrigger>
                               <SelectContent>
-                                <SelectItem value="RND">RND</SelectItem>
+                                <SelectItem value="XRD">XRD</SelectItem>
                                 <SelectItem value="RAD">RAD</SelectItem>
                                 <SelectItem value="HUD">HUD</SelectItem>
                                 <SelectItem value="None">None</SelectItem>
@@ -297,8 +339,12 @@ export default function App() {
                               <Input
                                 type="number"
                                 placeholder="amount"
-                                value={field.value || ''}
-                                onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)} // Parsing string input to number
+                                value={field.value || ""}
+                                onChange={(e) =>
+                                  field.onChange(
+                                    parseFloat(e.target.value) || 0
+                                  )
+                                }
                               />
                             </FormControl>
                           </div>
@@ -307,7 +353,15 @@ export default function App() {
                       )}
                     />
 
-                    <Button type="submit">Estimate Loan</Button>
+                    <Button
+                      type="submit"
+                      style={{
+                        backgroundColor: "#fb3640",
+                        color: "#fcfff7",
+                      }}
+                    >
+                      Estimate Loan
+                    </Button>
 
                     {radishAmountReturned > 0 && (
                       <div className="mt-4">
@@ -316,11 +370,17 @@ export default function App() {
                     )}
 
                     <div className="mt-4">
-                      <Button type="button" onClick={() => onDepositAssets(form.getValues())}>
+                      <Button
+                        type="button"
+                        onClick={() => onDepositAssets(form.getValues())}
+                        style={{
+                          backgroundColor: "#fb3640",
+                          color: "#fcfff7",
+                        }}
+                      >
                         Deposit Assets
                       </Button>
                     </div>
-
                   </form>
                 </Form>
               </CardContent>
@@ -328,6 +388,10 @@ export default function App() {
           </div>
         </div>
       </main>
+      <div className="absolute inset-0 pointer-events-none z-0">
+        <ShootingStars />
+        <StarsBackground />
+      </div>
     </div>
   );
 }
