@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Navbar from "@/components/ui/navbar";
 import { Button } from "@/components/ui/button";
 import { z } from "zod";
@@ -23,12 +23,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 
-// Updated Zod schema for four independent "amount" fields
+// Zod schema for four independent "amount" fields
 const formSchema = z.object({
-  amount1: z.number().min(2).max(50), // Validation for first amount
-  amount2: z.number().min(2).max(50), // Validation for second amount
-  amount3: z.number().min(2).max(50), // Validation for third amount
-  amount4: z.number().min(0).max(50).optional(), // Optional amount for fourth field
+  amount1: z.number().optional(), // Validation for first amount
+  amount2: z.number().optional(), // Validation for second amount
+  amount3: z.number().optional(), // Validation for third amount
+  amount4: z.number().optional(), // Optional amount for fourth field
 });
 
 export default function App() {
@@ -49,11 +49,45 @@ export default function App() {
     field4: "None", // Initial value for the fourth field
   });
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
+  const [radishAmountReturned, setRadishAmountReturned] = useState(0);
+  const [userHasLoan, setUserHasLoan] = useState(true);
+
+  useEffect(() => {
+    //here, need to check whether the user already has a loan NFT
+  }, []);
+
+  // Function to handle form submission
+  function onEstimateLoan(values: z.infer<typeof formSchema>) {
     console.log(values);
     alert("Submitted");
+    //Call the backend
+    //setRadishAmountReturned
   }
 
+  // Function to handle Deposit Assets
+  function onDepositAssets(values: z.infer<typeof formSchema>) {
+    console.log(values);
+    alert(`Deposited assets. You get Radish.`);
+  }
+
+  // If the userHasLoan is true, display different content
+  if (userHasLoan) {
+    return (
+      <div>
+        <Navbar />
+        <main className="p-4">
+          <div className="h-[40rem] flex justify-center items-center px-4">
+            <div className="text-4xl mx-auto font-normal text-neutral-600 dark:text-neutral-400">
+              <h1>userHasLoan is TRUE</h1>
+              <p>This is the alternative content displayed when the userHasLoan is true.</p>
+            </div>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  // Original content when the userHasLoan is false
   return (
     <div>
       <Navbar />
@@ -61,7 +95,7 @@ export default function App() {
         <div className="h-[40rem] flex justify-center items-center px-4">
           <div className="text-4xl mx-auto font-normal text-neutral-600 dark:text-neutral-400">
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+              <form onSubmit={form.handleSubmit(onEstimateLoan)} className="space-y-8">
                 
                 {/* First Input Field */}
                 <FormField
@@ -94,7 +128,8 @@ export default function App() {
                           <Input
                             type="number"
                             placeholder="amount"
-                            {...field}
+                            value={field.value || ''}
+                            onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)} // Parsing string input to number
                           />
                         </FormControl>
                       </div>
@@ -134,7 +169,8 @@ export default function App() {
                           <Input
                             type="number"
                             placeholder="amount"
-                            {...field}
+                            value={field.value || ''}
+                            onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)} // Parsing string input to number
                           />
                         </FormControl>
                       </div>
@@ -174,7 +210,8 @@ export default function App() {
                           <Input
                             type="number"
                             placeholder="amount"
-                            {...field}
+                            value={field.value || ''}
+                            onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)} // Parsing string input to number
                           />
                         </FormControl>
                       </div>
@@ -182,7 +219,18 @@ export default function App() {
                     </FormItem>
                   )}
                 />
+
+                {/* Estimate Loan Button */}
                 <Button type="submit">Estimate Loan</Button>
+
+                {/* Display Radish Return */}
+                <div className="mt-4">You will get {radishAmountReturned} Radish.</div>
+
+                {/* New Deposit Assets Button */}
+                <Button type="button" onClick={() => onDepositAssets(form.getValues())}>
+                  Deposit Assets
+                </Button>
+
               </form>
             </Form>
           </div>
