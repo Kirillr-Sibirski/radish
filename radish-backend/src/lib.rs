@@ -7,7 +7,9 @@ type LazySet<K> = KeyValueStore<K, ()>;
 
 #[derive(NonFungibleData, ScryptoSbor, Clone)]
 struct Borrower {
+    #[mutable]
     collateral: HashMap<ResourceAddress, Decimal>,
+    #[mutable]
     debt: Decimal,
 }
 
@@ -39,7 +41,7 @@ mod radish {
         radish_vault: Vault,
         // Borrower Resources        
         borrower_manager: ResourceManager,
-        borrowers: LazySet<NonFungibleGlobalId>,
+        // borrowers: LazySet<NonFungibleGlobalId>,
         // collateral_addresses: Vec<ResourceAddress>, //! May have to re-enable later
         collateral_vaults: KeyValueStore<ResourceAddress, Vault>,
         // Badges
@@ -79,7 +81,7 @@ mod radish {
                 .into();
             
             // Borrower
-            let borrower_manager: ResourceManager = ResourceBuilder::new_integer_non_fungible::<Borrower>(OwnerRole::None)
+            let borrower_manager: ResourceManager = ResourceBuilder::new_ruid_non_fungible::<Borrower>(OwnerRole::None)
                 .metadata(metadata!(init {
                     "name" => "Radish Borrower Badge", locked;
                 }))
@@ -119,7 +121,7 @@ mod radish {
                 radish_vault: Vault::with_bucket(radish_bucket),
                 // Borrower Resources
                 borrower_manager,
-                borrowers: KeyValueStore::new(),
+                // borrowers: KeyValueStore::new(),
                 // collateral_addresses,
                 collateral_vaults,
                 // Badges
@@ -141,6 +143,7 @@ mod radish {
             info!("[estimate_loan] collateral: {:?}", collateral);
 
             /* ---------------- Validation ---------------- */
+            assert!(collateral.len() > 0, "No resources provided");
             assert!(self.placeholder_oracle_collateral_prices.get(&self.radish_resource).is_some(), "RSH price not tracked by oracle");
 
             for (address, amount) in collateral.iter() {
@@ -165,14 +168,35 @@ mod radish {
             ).unwrap();
             
             /* ------------------ Return ------------------ */
-            info!("Collateral in USD: {:?}\nCollateral in RSH: {:?}", estimated_usd, estimated_rsh);
+            info!("[estimate_loan] Collateral in USD: {:?}\n[estimate_loan] Collateral in RSH: {:?}", estimated_usd, estimated_rsh);
 
             Runtime::emit_event(EstimateLoanEvent { value: estimated_rsh.clone() });
             estimated_rsh
         }
 
-        pub fn get_loan(&mut self, mut collateral: Vec<Bucket>) {
+        pub fn get_loan(&mut self, collateral: Vec<Bucket>) -> (Bucket, Bucket) {
+            assert!(collateral.len() > 0, "No buckets provided");
+            info!("[get_loan] Collateral: {:?} {:?}", &collateral, &collateral[0].amount());
+            
+            let resource_map: HashMap<ResourceAddress, Decimal> = collateral.iter()
+                .map(|bucket| (bucket.resource_address(), bucket.amount()))
+                .collect();
+            let estimated_rsh: Decimal = self.estimate_loan(resource_map.clone());
 
+            assert!(self.radish_vault.amount() >= estimated_rsh, "Insufficient RSH in vault to provide loan");
+
+            let borrower_badge: Bucket = self.borrower_manager.mint_ruid_non_fungible(Borrower {
+                collateral: resource_map,
+                debt: estimated_rsh.clone(),
+            });
+            info!("[get_loan] borrower badge: {:?}", borrower_badge);
+
+            for bucket in collateral {
+                let mut resource_vault = self.collateral_vaults.get_mut(&bucket.resource_address()).unwrap();
+                resource_vault.put(bucket);
+            }
+
+            (borrower_badge, self.radish_vault.take(estimated_rsh))
         }
 
         pub fn repay_loan(&mut self) {}
