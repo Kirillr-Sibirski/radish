@@ -41,6 +41,11 @@ import {
 import { generateEstimateLoan } from "../manifests";
 import { GatewayApiClient } from "@radixdlt/babylon-gateway-api-sdk";
 
+const componentAddress = "component_tdx_2_1crxwj8t0y54sk4kyfl6xlxhzff7tfjecqetexeqhc29xp5vydtcj3u"; 
+const nftBadge_Resource = "resource_tdx_2_1ntag8j8d3evjgfduc5uj45uf5ejr8vjw7jy0n8kespej7kmns9dvwa";
+const dAppDefinitionAddress = "account_tdx_2_128zw2yyy9t9966h2eakq8rhedwfwaylfaz53v84fpaq2jeq8y2eaj8";
+const XDR_Resource = "resource_tdx_2_1tknxxxxxxxxxradxrdxxxxxxxxx009923554798xxxxxxxxxtfd2jc";
+
 // Zod schema for validating the form
 const formSchema = z.object({
   amount1: z.number().optional(),
@@ -70,12 +75,9 @@ export default function App() {
   const [userHasLoan, setUserHasLoan] = useState(false); // To check if the user has an active loan
   const [estimatedValueWithdraw, setEstimatedValueWithdraw] = useState(0);
   const [radishAmount, setRadishAmount] = useState(0); // Amount to deposit
-
-  const componentAddress =
-    "component_tdx_2_1crxwj8t0y54sk4kyfl6xlxhzff7tfjecqetexeqhc29xp5vydtcj3u";
+  
   const rdt = RadixDappToolkit({
-    dAppDefinitionAddress:
-      "account_tdx_2_128zw2yyy9t9966h2eakq8rhedwfwaylfaz53v84fpaq2jeq8y2eaj8", // Invalid address
+    dAppDefinitionAddress: dAppDefinitionAddress,
     networkId: RadixNetwork.Stokenet,
     applicationName: "Radish",
     applicationVersion: "1.0.0",
@@ -85,14 +87,13 @@ export default function App() {
   const gatewayApi = GatewayApiClient.initialize(rdt.gatewayApi.clientConfig);
 
   useEffect(() => {
-    // Check if the user has any loans (dummy implementation for now)
-  }, []);
+    }, []);
 
   // Function to handle form submission for loan estimation
   async function onEstimateLoan(values: z.infer<typeof formSchema>) {
     const mapCoins = new Map<string, number>([
       [
-        "resource_tdx_2_1tknxxxxxxxxxradxrdxxxxxxxxx009923554798xxxxxxxxxtfd2jc",
+        XDR_Resource,
         values.amount1 ?? 0,
       ], //XRD
     ]);
@@ -109,7 +110,7 @@ export default function App() {
   // Function to handle asset deposit
   async function onDepositAssets(values: z.infer<typeof formSchema>) {
     const mapCoins = new Map<string, number>([
-      ["address1", values.amount1 ?? 0], //XRD
+      [XDR_Resource, values.amount1 ?? 0], //XRD
     ]);
     const result = await rdt.walletApi.sendTransaction({
       transactionManifest: "", // Call deposit function
