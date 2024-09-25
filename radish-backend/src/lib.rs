@@ -29,7 +29,7 @@ mod radish {
         // Borrower Resources        
         borrower_manager: ResourceManager,
         borrowers: LazySet<NonFungibleGlobalId>,
-        collateral_addresses: Vec<ResourceAddress>,
+        // collateral_addresses: Vec<ResourceAddress>, //! May have to re-enable later
         collateral_vaults: KeyValueStore<ResourceAddress, Vault>,
         // Badges
         // ...
@@ -109,7 +109,7 @@ mod radish {
                 // Borrower Resources
                 borrower_manager,
                 borrowers: KeyValueStore::new(),
-                collateral_addresses,
+                // collateral_addresses,
                 collateral_vaults,
                 // Badges
                 // ...
@@ -126,22 +126,47 @@ mod radish {
             (component, owner_badge)
         }
 
-        pub fn estimate_loan(&self, collateral: Vec<Bucket>) -> Decimal {
+        pub fn estimate_loan(&self, collateral: HashMap<ResourceAddress, Decimal>) -> Decimal {
+            // info!("[estimate_loan] collateral: {:?}", collateral);
+
+            // // Function Validation
+            // assert!(self.placeholder_oracle_collateral_prices.get(&self.radish_resource).is_some(), "RSH price not tracked by oracle");
+
+            // for bucket in &collateral {
+            //     assert!(self.collateral_vaults.get(&bucket.resource_address()).is_some(), "Invalid resource provided as collateral");
+            //     assert!(self.placeholder_oracle_collateral_prices.get(&bucket.resource_address()).is_some(), "Invalid oracle does not track provided collateral price");
+            //     assert!(bucket.amount() >= Decimal::ZERO, "Bucket somehow less than 0");
+            // }
+
+            // let mut estimated_usd: Decimal = dec!(0.0);
+
+            // for bucket in &collateral {
+            //     estimated_usd += bucket.amount() * *self.placeholder_oracle_collateral_prices.get(&bucket.resource_address()).unwrap();
+            // }
+            
+            // let estimated_rsh: Decimal = estimated_usd / *self.placeholder_oracle_collateral_prices.get(&self.radish_resource).unwrap();
+            
+            // info!("Collateral in USD: {:?}\nCollateral in RSH: {:?}", estimated_usd, estimated_rsh);
+            // estimated_rsh
+
             info!("[estimate_loan] collateral: {:?}", collateral);
 
-            // Function Validation
+            /* ---------------- Validation ---------------- */
             assert!(self.placeholder_oracle_collateral_prices.get(&self.radish_resource).is_some(), "RSH price not tracked by oracle");
 
-            for bucket in &collateral {
-                assert!(self.collateral_vaults.get(&bucket.resource_address()).is_some(), "Invalid resource provided as collateral");
-                assert!(self.placeholder_oracle_collateral_prices.get(&bucket.resource_address()).is_some(), "Invalid oracle does not track provided collateral price");
-                assert!(bucket.amount() >= Decimal::ZERO, "Bucket somehow less than 0");
+            for (address, amount) in collateral.iter() {
+                assert!(self.collateral_vaults.get(address).is_some(), "Invalid resource provided as collateral");
+                assert!(self.placeholder_oracle_collateral_prices.get(address).is_some(), "Invalid oracle does not track provided collateral price");
+                assert!(amount >= &Decimal::ZERO, "Bucket somehow less than 0");
             }
 
+            /* ------------------- Logic ------------------ */
             let mut estimated_usd: Decimal = dec!(0.0);
+            
+            for (address, amount) in collateral.iter() {
+                let usd_value: Decimal = amount.clone() * *self.placeholder_oracle_collateral_prices.get(address).unwrap();
 
-            for bucket in &collateral {
-                estimated_usd += bucket.amount() * *self.placeholder_oracle_collateral_prices.get(&bucket.resource_address()).unwrap();
+                estimated_usd += usd_value;
             }
             
             let estimated_rsh: Decimal = estimated_usd / *self.placeholder_oracle_collateral_prices.get(&self.radish_resource).unwrap();
