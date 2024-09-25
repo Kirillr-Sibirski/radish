@@ -3,7 +3,7 @@ import Image from 'next/image';
 
 export default function Navbar() {
     return (
-        <nav className="bg-white shadow-md">
+        <nav className="bg-background shadow-md">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 <div className="flex justify-between h-16">
                     <div className="flex items-center">
@@ -19,7 +19,7 @@ export default function Navbar() {
                     </div>
 
                     <div className="hidden md:flex items-center space-x-4">
-                        <Link href="/contact" className="text-gray-600 hover:text-gray-900">
+                        <Link href="/app" className="text-gray-600 hover:text-gray-900">
                             App
                         </Link>
                     </div>
