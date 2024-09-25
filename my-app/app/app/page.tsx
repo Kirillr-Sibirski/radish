@@ -164,8 +164,9 @@ export default function App() {
       [XDR_Resource, values.amount1 ?? 0], // XRD
     ]);
     const result = await rdt.walletApi.sendTransaction({
-      transactionManifest: generateGetLoan(account, componentAddress, mapCoins),
+      transactionManifest: generateGetLoan(account.address, componentAddress, mapCoins),
     });
+
 
     if (result.isErr()) throw result.error;
 
