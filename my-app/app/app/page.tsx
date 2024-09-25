@@ -26,10 +26,10 @@ import {
   Card,
   CardContent,
   CardDescription,
-  CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { PlusIcon, MinusIcon } from "@radix-ui/react-icons";
 import { ShootingStars } from "@/components/ui/shooting-stars";
 import { StarsBackground } from "@/components/ui/stars-background";
 import {
@@ -41,23 +41,20 @@ import {
 import { generateEstimateLoan } from "../manifests";
 import { GatewayApiClient } from "@radixdlt/babylon-gateway-api-sdk";
 
-// Zod schema for four independent "amount" fields
+// Zod schema for validating the form
 const formSchema = z.object({
-  amount1: z.number().optional(), // Validation for first amount
-  amount2: z.number().optional(), // Validation for second amount
-  amount3: z.number().optional(), // Validation for third amount
-  amount4: z.number().optional(), // Optional amount for fourth field
+  amount1: z.number().optional(),
+  amount2: z.number().optional(),
+  amount3: z.number().optional(),
 });
 
 export default function App() {
-
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       amount1: 0,
       amount2: 0,
       amount3: 0,
-      amount4: 0, // Default value for the fourth field
     },
   });
 
@@ -65,68 +62,88 @@ export default function App() {
     field1: "XRD",
     field2: "RAD",
     field3: "HUD",
-    field4: "None", // Initial value for the fourth field
   });
 
+  const [visibleFields, setVisibleFields] = useState(1); // Control the number of visible asset input fields
+
   const [radishAmountReturned, setRadishAmountReturned] = useState(0);
-  const [userHasLoan, setUserHasLoan] = useState(false);
+  const [userHasLoan, setUserHasLoan] = useState(false); // To check if the user has an active loan
   const [estimatedValueWithdraw, setEstimatedValueWithdraw] = useState(0);
   const [radishAmount, setRadishAmount] = useState(0); // Amount to deposit
 
-  const componentAddress = "component_tdx_2_1crxwj8t0y54sk4kyfl6xlxhzff7tfjecqetexeqhc29xp5vydtcj3u";
+  const componentAddress =
+    "component_tdx_2_1crxwj8t0y54sk4kyfl6xlxhzff7tfjecqetexeqhc29xp5vydtcj3u";
   const rdt = RadixDappToolkit({
-    dAppDefinitionAddress: "account_tdx_2_128zw2yyy9t9966h2eakq8rhedwfwaylfaz53v84fpaq2jeq8y2eaj8", // invalid address
+    dAppDefinitionAddress:
+      "account_tdx_2_128zw2yyy9t9966h2eakq8rhedwfwaylfaz53v84fpaq2jeq8y2eaj8", // Invalid address
     networkId: RadixNetwork.Stokenet,
     applicationName: "Radish",
     applicationVersion: "1.0.0",
     logger: Logger(1),
-  }); 
+  });
+
   const gatewayApi = GatewayApiClient.initialize(rdt.gatewayApi.clientConfig);
 
   useEffect(() => {
-    // Does the user own any
+    // Check if the user has any loans (dummy implementation for now)
   }, []);
 
-  // Function to handle form submission
+  // Function to handle form submission for loan estimation
   async function onEstimateLoan(values: z.infer<typeof formSchema>) {
     const mapCoins = new Map<string, number>([
-      ["resource_tdx_2_1tknxxxxxxxxxradxrdxxxxxxxxx009923554798xxxxxxxxxtfd2jc", values.amount1 ?? 0], //XRD
+      [
+        "resource_tdx_2_1tknxxxxxxxxxradxrdxxxxxxxxx009923554798xxxxxxxxxtfd2jc",
+        values.amount1 ?? 0,
+      ], //XRD
     ]);
-    console.log("!!!!!!!!!!!!!!!!!!!!!!!!!!!", generateEstimateLoan(componentAddress, mapCoins));
     const result = await rdt.walletApi.sendTransaction({
       transactionManifest: generateEstimateLoan(componentAddress, mapCoins),
     });
-    if(result.isErr()) throw result.error;
+    if (result.isErr()) throw result.error;
     const committedDetails = await gatewayApi.transaction.getCommittedDetails(
       result.value.transactionIntentHash
     );
-    console.log("Instantiate committed details:", committedDetails);
-    console.log("result: ", result);
-    setRadishAmount(0); // Set the amount of Radish returned by the contract
+    setRadishAmount(0); // Reset the amount of Radish returned by the contract
   }
 
-  // Function to handle Deposit Assets
+  // Function to handle asset deposit
   async function onDepositAssets(values: z.infer<typeof formSchema>) {
     const mapCoins = new Map<string, number>([
       ["address1", values.amount1 ?? 0], //XRD
     ]);
     const result = await rdt.walletApi.sendTransaction({
-      transactionManifest: "", // Call on deposit function
+      transactionManifest: "", // Call deposit function
     });
-    console.log("result: ", result);
     alert(`Successful collateral deposit.`);
   }
 
+  // Function to add an additional asset selection field
+  const handleAddAsset = () => {
+    if (visibleFields < 3) {
+      setVisibleFields(visibleFields + 1);
+    }
+  };
+
+  // Function to collapse an asset selection field
+  const handleRemoveAsset = () => {
+    if (visibleFields > 1) {
+      setVisibleFields(visibleFields - 1);
+    }
+  };
+
+  // Function to simulate the withdrawal estimate
   const handleEstimateWithdraw = () => {
     const estimate = radishAmount * 1.2;
     setEstimatedValueWithdraw(estimate);
   };
 
+  // Function to handle withdrawal
   const handleWithdraw = () => {
     alert("Withdraw initiated!");
   };
 
   if (userHasLoan) {
+    // Render the withdrawal functionality card if the user has a loan
     return (
       <div style={{ backgroundColor: "#fcfff7", color: "#070707" }}>
         <Navbar />
@@ -198,27 +215,28 @@ export default function App() {
     );
   }
 
+  // Render the deposit functionality card if the user doesn't have a loan
   return (
     <div style={{ backgroundColor: "#fcfff7", color: "#070707" }}>
       <Navbar />
       <main className="p-4">
-        <div className="h-[40rem] flex justify-center items-center px-4">
+        <div className="pt-20 flex justify-center items-center px-4">
           <div className="text-4xl mx-auto font-normal">
             <Card>
               <CardHeader>
                 <CardTitle>Deposit Collateral</CardTitle>
                 <CardDescription>
-                  Choose max 3 assets of your choice, estimate loan in Radish,
-                  and deposit collateral in the assets of your choice.
+                  Choose assets of your choice, estimate the loan in Radish, and
+                  deposit collateral in the assets of your choice.
                 </CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="relative">
                 <Form {...form}>
                   <form
                     onSubmit={form.handleSubmit(onEstimateLoan)}
                     className="space-y-8"
                   >
-                    {/* First Input Field */}
+                    {/* First Asset Input */}
                     <FormField
                       control={form.control}
                       name="amount1"
@@ -242,13 +260,12 @@ export default function App() {
                                 <SelectItem value="XRD">XRD</SelectItem>
                                 <SelectItem value="RAD">RAD</SelectItem>
                                 <SelectItem value="HUD">HUD</SelectItem>
-                                <SelectItem value="None">None</SelectItem>
                               </SelectContent>
                             </Select>
                             <FormControl>
                               <Input
                                 type="number"
-                                placeholder="amount"
+                                placeholder="Amount"
                                 value={field.value || ""}
                                 onChange={(e) =>
                                   field.onChange(
@@ -263,95 +280,128 @@ export default function App() {
                       )}
                     />
 
-                    {/* Second Input Field */}
-                    <FormField
-                      control={form.control}
-                      name="amount2"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Deposit Asset 2</FormLabel>
-                          <div className="flex items-center space-x-4">
-                            <Select
-                              onValueChange={(value) =>
-                                setSelectedAssets((prev) => ({
-                                  ...prev,
-                                  field2: value,
-                                }))
-                              }
-                              defaultValue={selectedAssets.field2}
-                            >
-                              <SelectTrigger className="w-[120px]">
-                                <SelectValue placeholder="Select asset" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="XRD">XRD</SelectItem>
-                                <SelectItem value="RAD">RAD</SelectItem>
-                                <SelectItem value="HUD">HUD</SelectItem>
-                                <SelectItem value="None">None</SelectItem>
-                              </SelectContent>
-                            </Select>
-                            <FormControl>
-                              <Input
-                                type="number"
-                                placeholder="amount"
-                                value={field.value || ""}
-                                onChange={(e) =>
-                                  field.onChange(
-                                    parseFloat(e.target.value) || 0
-                                  )
+                    {/* Second Asset Input */}
+                    {visibleFields >= 2 && (
+                      <FormField
+                        control={form.control}
+                        name="amount2"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Deposit Asset 2</FormLabel>
+                            <div className="flex items-center space-x-4">
+                              <Select
+                                onValueChange={(value) =>
+                                  setSelectedAssets((prev) => ({
+                                    ...prev,
+                                    field2: value,
+                                  }))
                                 }
-                              />
-                            </FormControl>
-                          </div>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
+                                defaultValue={selectedAssets.field2}
+                              >
+                                <SelectTrigger className="w-[120px]">
+                                  <SelectValue placeholder="Select asset" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="XRD">XRD</SelectItem>
+                                  <SelectItem value="RAD">RAD</SelectItem>
+                                  <SelectItem value="HUD">HUD</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <FormControl>
+                                <Input
+                                  type="number"
+                                  placeholder="Amount"
+                                  value={field.value || ""}
+                                  onChange={(e) =>
+                                    field.onChange(
+                                      parseFloat(e.target.value) || 0
+                                    )
+                                  }
+                                />
+                              </FormControl>
+                            </div>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    )}
 
-                    {/* Third Input Field */}
-                    <FormField
-                      control={form.control}
-                      name="amount3"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Deposit Asset 3</FormLabel>
-                          <div className="flex items-center space-x-4">
-                            <Select
-                              onValueChange={(value) =>
-                                setSelectedAssets((prev) => ({
-                                  ...prev,
-                                  field3: value,
-                                }))
-                              }
-                              defaultValue={selectedAssets.field3}
-                            >
-                              <SelectTrigger className="w-[120px]">
-                                <SelectValue placeholder="Select asset" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="XRD">XRD</SelectItem>
-                                <SelectItem value="RAD">RAD</SelectItem>
-                                <SelectItem value="HUD">HUD</SelectItem>
-                                <SelectItem value="None">None</SelectItem>
-                              </SelectContent>
-                            </Select>
-                            <FormControl>
-                              <Input
-                                type="number"
-                                placeholder="amount"
-                                value={field.value || ""}
-                                onChange={(e) =>
-                                  field.onChange(
-                                    parseFloat(e.target.value) || 0
-                                  )
+                    {/* Third Asset Input */}
+                    {visibleFields >= 3 && (
+                      <FormField
+                        control={form.control}
+                        name="amount3"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Deposit Asset 3</FormLabel>
+                            <div className="flex items-center space-x-4">
+                              <Select
+                                onValueChange={(value) =>
+                                  setSelectedAssets((prev) => ({
+                                    ...prev,
+                                    field3: value,
+                                  }))
                                 }
-                              />
-                            </FormControl>
-                          </div>
-                          <FormMessage />
-                        </FormItem>
+                                defaultValue={selectedAssets.field3}
+                              >
+                                <SelectTrigger className="w-[120px]">
+                                  <SelectValue placeholder="Select asset" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="XRD">XRD</SelectItem>
+                                  <SelectItem value="RAD">RAD</SelectItem>
+                                  <SelectItem value="HUD">HUD</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <FormControl>
+                                <Input
+                                  type="number"
+                                  placeholder="Amount"
+                                  value={field.value || ""}
+                                  onChange={(e) =>
+                                    field.onChange(
+                                      parseFloat(e.target.value) || 0
+                                    )
+                                  }
+                                />
+                              </FormControl>
+                            </div>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    )}
+
+                    {/* "+" Button to Add More Assets */}
+                    <div className="flex justify-center space-x-4">
+                      {visibleFields < 3 && (
+                        <Button
+                          type="button"
+                          onClick={handleAddAsset}
+                          style={{
+                            backgroundColor: "#070707",
+                            color: "#fcfff7",
+                          }}
+                        >
+                          <PlusIcon className="mr-2" />
+                          Add Asset
+                        </Button>
                       )}
-                    />
+
+                      {visibleFields > 1 && (
+                        <Button
+                          type="button"
+                          onClick={handleRemoveAsset}
+                          style={{
+                            backgroundColor: "#070707",
+                            color: "#fcfff7",
+                          }}
+                        >
+                          <MinusIcon className="mr-2" />
+                          Remove Asset
+                        </Button>
+                      )}
+                    </div>
 
                     <Button
                       type="submit"
