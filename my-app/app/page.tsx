@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { ShootingStars } from "@/components/ui/shooting-stars";
 import { StarsBackground } from "@/components/ui/stars-background";
+import { ContainerScroll } from "@/components/ui/container-scroll-animation";
 
 export default function Home() {
   const words = ["This is Radish", "Built on Radix"];
