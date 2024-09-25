@@ -36,6 +36,7 @@ import {
   RadixNetwork,
   Logger,
 } from "@radixdlt/radix-dapp-toolkit";
+import {generateEstimateLoan} from "../manifests";
 
 // Zod schema for four independent "amount" fields
 const formSchema = z.object({
@@ -84,9 +85,13 @@ export default function App() {
 
   // Function to handle form submission
   async function onEstimateLoan(values: z.infer<typeof formSchema>) {
-    console.log(values.amount1);
+    const mapCoins = new Map<string, number>([
+      ["address1", values.amount1 ?? 0],
+      ["address2", values.amount2 ?? 0],
+      ["address3", values.amount3 ?? 0]
+    ]);
     const result = await rdt.walletApi.sendTransaction({
-      transactionManifest: "",
+      transactionManifest: generateEstimateLoan(componentAddress, mapCoins),
     })
     console.log("result: ", result)
     setRadishAmount(0) //set the amount of radish returned by the contract
