@@ -168,6 +168,10 @@ export default function App() {
     }
   }
 
+  async function onDepositAssets(value: any) {
+    alert("Deposit collatearl")
+  }
+
 
   // Function to add an additional asset selection field
   const handleAddAsset = () => {
@@ -240,14 +244,18 @@ export default function App() {
                       </Button>
 
                       {estimatedValueWithdraw > 0 && (
-                        <div className="mt-4 p-4 bg-gray-100 rounded-lg shadow-sm">
-                          <p style={{
-                            color: "#070707",
-                          }} className="text-lg font-semibold">
-                            Estimated Value:
-                            <span className="text-primary font-bold"> {estimatedValueWithdraw} Radish</span>
-                          </p>
-                        </div>
+                        <Card>
+                          <CardContent>
+                            <div className="mt-4 p-4 bg-gray-100 rounded-lg shadow-sm">
+                              <p style={{
+                                color: "#070707",
+                              }} className="text-lg font-semibold">
+                                Estimated Value:
+                                <span className="text-primary font-bold"> {estimatedValueWithdraw} Radish</span>
+                              </p>
+                            </div>
+                          </CardContent>
+                        </Card>
                       )}
 
                       <div className="mt-4">
@@ -470,24 +478,30 @@ export default function App() {
                       Estimate Loan
                     </Button>
 
-                    {radishAmountReturned > 0 && (
-                      <div className="mt-4">
-                        <p>Estimated value: {radishAmountReturned} Radish</p>
+                    {estimatedValueWithdraw > 0 && (
+                      <div className="mt-4 p-4 rounded-lg shadow-sm">
+                        <p style={{
+                          color: "#070707",
+                        }} className="text-lg font-semibold">
+                          Estimated Value:
+                          <span className="text-primary font-bold"> {estimatedValueWithdraw} Radish</span>
+                        </p>
+                        <div className="mt-4">
+                          <Button
+                            type="button"
+                            onClick={() => onDepositAssets(form.getValues())}
+                            style={{
+                              backgroundColor: "#fb3640",
+                              color: "#fcfff7",
+                            }}
+                          >
+                            Deposit Assets
+                          </Button>
+                        </div>
                       </div>
                     )}
 
-                    <div className="mt-4">
-                      <Button
-                        type="button"
-                        onClick={() => onDepositAssets(form.getValues())}
-                        style={{
-                          backgroundColor: "#fb3640",
-                          color: "#fcfff7",
-                        }}
-                      >
-                        Deposit Assets
-                      </Button>
-                    </div>
+
                   </form>
                 </Form>
               </CardContent>
