@@ -31,6 +31,9 @@ mod radish {
         borrowers: LazySet<NonFungibleGlobalId>,
         collateral_vaults: KeyValueStore<ResourceAddress, Vault>,
         // Badges
+        // ...
+        // Placeholder Oracle
+        placeholder_oracle_collateral_prices: KeyValueStore<ResourceAddress, Decimal>, // Resource -> USD
     }
 
     impl Radish {
@@ -47,7 +50,8 @@ mod radish {
                 .mint_initial_supply(1)
                 .into();
 
-            /* ------------------ Buckets ----------------- */
+
+            /* ----------------- Resources ---------------- */
             // Radish
             let radish_bucket: Bucket = ResourceBuilder::new_fungible(OwnerRole::None)
                 .metadata(metadata!(init {
@@ -83,6 +87,13 @@ mod radish {
 
             let collateral_vaults = KeyValueStore::new();
             collateral_vaults.insert(XRD, Vault::new(XRD));
+            
+
+            /* ------------ Placeholder Oracle ------------ */
+            let placeholder_oracle_collateral_prices = KeyValueStore::new();
+            placeholder_oracle_collateral_prices.insert(radish_bucket.resource_address(), dec!(2.0));
+            placeholder_oracle_collateral_prices.insert(XRD, dec!(0.02099)); // OCISWAP 
+
 
             /* --------------- Instantising --------------- */
             let component = Radish {
@@ -94,6 +105,10 @@ mod radish {
                 borrower_manager,
                 borrowers: KeyValueStore::new(),
                 collateral_vaults,
+                // Badges
+                // ...
+                // Placeholder Oracle
+                placeholder_oracle_collateral_prices,
             }
             .instantiate()
             .prepare_to_globalize(OwnerRole::Fixed(rule!(require(
@@ -105,9 +120,31 @@ mod radish {
             (component, owner_badge)
         }
 
-        pub fn estimate_loan(&self) {}
+        pub fn estimate_loan(&self, collateral: Vec<Bucket>) -> Decimal {
+            info!("[estimate_loan] collateral: {}", collateral);
 
-        pub fn get_loan(&mut self, mut collateral: Vec<Bucket>) -> Bucket {
+            // Function Validation
+            assert!(self.placeholder_oracle_collateral_prices.get(&self.radish_resource).is_some(), "RSH price not tracked by oracle");
+
+            for bucket in &collateral {
+                assert!(self.collateral_vaults.get(&bucket.resource_address()).is_some(), "Invalid resource provided as collateral");
+                assert!(self.placeholder_oracle_collateral_prices.get(&bucket.resource_address()).is_some(), "Invalid oracle does not track provided collateral price");
+                assert!(bucket.amount() >= Decimal::ZERO, "Bucket somehow less than 0");
+            }
+
+            let mut estimated_usd: Decimal = dec!(0.0);
+
+            for bucket in &collateral {
+                estimated_usd += bucket.amount() * *self.placeholder_oracle_collateral_prices.get(&bucket.resource_address()).unwrap();
+            }
+            
+            let estimated_rsh: Decimal = estimated_usd / *self.placeholder_oracle_collateral_prices.get(&self.radish_resource).unwrap();
+            
+            info!("Collateral in USD: {}\nCollateral in RSH: {}", estimated_usd, estimated_rsh);
+            estimated_rsh
+        }
+
+        pub fn get_loan(&mut self, mut collateral: Vec<Bucket>) {
 
         }
 
