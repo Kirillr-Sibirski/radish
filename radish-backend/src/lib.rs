@@ -201,7 +201,7 @@ mod radish {
         }
 
         pub fn repay_loan(&mut self) {
-            
+            // TODO: Pass Proof
         }
     }
 }
