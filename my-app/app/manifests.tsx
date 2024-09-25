@@ -35,7 +35,7 @@ export function generateGetLoan(
     
   `));
   let s_bucket = "";
-  collateral.forEach((_, address) => (s_bucket += `Bucket(Bucket_${address}), `));
+  collateral.forEach((_, address) => (s_bucket += `Bucket("Bucket_${address}"), `));
 
   return `${s_resource}CALL_METHOD
     Address("${component_address}")
