@@ -153,12 +153,16 @@ mod radish {
             let mut estimated_usd: Decimal = dec!(0.0);
             
             for (address, amount) in collateral.iter() {
-                let usd_value: Decimal = amount.clone() * *self.placeholder_oracle_collateral_prices.get(address).unwrap();
+                let usd_value: Decimal = amount.clone().checked_mul(
+                    *self.placeholder_oracle_collateral_prices.get(address).unwrap()
+                ).unwrap();
 
-                estimated_usd += usd_value;
+                estimated_usd = estimated_usd.checked_add(usd_value).unwrap();
             }
             
-            let estimated_rsh: Decimal = estimated_usd / *self.placeholder_oracle_collateral_prices.get(&self.radish_resource).unwrap();
+            let estimated_rsh: Decimal = estimated_usd.checked_div(
+                *self.placeholder_oracle_collateral_prices.get(&self.radish_resource).unwrap()
+            ).unwrap();
             
             /* ------------------ Return ------------------ */
             info!("Collateral in USD: {:?}\nCollateral in RSH: {:?}", estimated_usd, estimated_rsh);
