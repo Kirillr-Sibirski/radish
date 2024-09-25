@@ -22,6 +22,8 @@ export default function Navbar() {
                         <Link href="/app" className="text-gray-600 hover:text-gray-900">
                             App
                         </Link>
+                        <div dangerouslySetInnerHTML={{ __html: "<radix-connect-button></radix-connect-button>" }}></div>
+                        {/* </radix-connect-button> */}
                     </div>
 
                     <div className="flex md:hidden items-center">

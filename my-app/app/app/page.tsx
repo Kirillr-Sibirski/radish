@@ -30,6 +30,12 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
+import {
+  DataRequestBuilder,
+  RadixDappToolkit,
+  RadixNetwork,
+  Logger,
+} from "@radixdlt/radix-dapp-toolkit";
 
 // Zod schema for four independent "amount" fields
 const formSchema = z.object({
@@ -62,16 +68,24 @@ export default function App() {
   const [estimatedValueWithdraw, setEstimatedValueWithdraw] = useState(0);
   const [radishAmount, setRadishAmount] = useState(0); // Amount to deposit
 
+  const rdt = RadixDappToolkit({
+    dAppDefinitionAddress:
+      'account_rdx12y7md4spfq5qy7e3mfjpa52937uvkxf0nmydsu5wydkkxw3qx6nghn',
+    networkId: RadixNetwork.Mainnet,
+    applicationName: 'Radix Web3 dApp',
+    applicationVersion: '1.0.0',
+    logger: Logger(1)
+  })
+
   useEffect(() => {
-    //here, need to check whether the user already has a loan NFT
+    // check if the user has loan NFT
   }, []);
 
   // Function to handle form submission
   function onEstimateLoan(values: z.infer<typeof formSchema>) {
-    console.log(values);
-    alert("Submitted");
-    //Call the backend
-    //setRadishAmountReturned
+    console.log(values.amount1);
+
+    setRadishAmount(0)
   }
 
   // Function to handle Deposit Assets
@@ -91,7 +105,6 @@ export default function App() {
     alert("Withdraw initiated!");
   };
 
-  // If the userHasLoan is true, display different content
   if (userHasLoan) {
     return (
       <div>
@@ -149,6 +162,7 @@ export default function App() {
   return (
     <div>
       <Navbar />
+      {/* <radix-connect-button /> */}
       <main className="p-4">
         <div className="h-[40rem] flex justify-center items-center px-4">
           <div className="text-4xl mx-auto font-normal text-neutral-600 dark:text-neutral-400">
