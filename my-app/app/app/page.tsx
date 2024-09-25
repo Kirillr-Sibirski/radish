@@ -40,6 +40,7 @@ import {
 } from "@radixdlt/radix-dapp-toolkit";
 import { generateEstimateLoan } from "../manifests";
 import { GatewayApiClient } from "@radixdlt/babylon-gateway-api-sdk";
+import { Footer } from "@/components/ui/footer";
 
 const componentAddress = "component_tdx_2_1czurzyy83pjmkrsles9f4lqvlh5shdltv5dg73lk9jtdctmq666wwl";
 const nftBadge_Resource = "resource_tdx_2_1n2jpf3d5h90w86vazygm7aageydmt0j7sgyf6tnt3qf4cvllum03nw";
@@ -282,237 +283,240 @@ export default function App() {
 
   // Render the deposit functionality card if the user doesn't have a loan
   return (
-    <div style={{ backgroundColor: "#fcfff7", color: "#070707" }}>
-      <Navbar />
-      <main className="p-4">
-        <div className="pt-20 flex justify-center items-center px-4">
-          <div className="text-4xl mx-auto font-normal">
-            <Card>
-              <CardHeader>
-                <CardTitle>Deposit Collateral</CardTitle>
-                <CardDescription>
-                  Choose assets of your choice, estimate the loan in Radish, and
-                  deposit collateral in the assets of your choice.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="relative">
-                <Form {...form}>
-                  <form
-                    onSubmit={form.handleSubmit(onEstimateLoan)}
-                    className="space-y-8"
-                  >
-                    {/* First Asset Input */}
-                    <FormField
-                      control={form.control}
-                      name="amount1"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Deposit Asset 1</FormLabel>
-                          <div className="flex items-center space-x-4">
-                            <Select
-                              onValueChange={(value) =>
-                                setSelectedAssets((prev) => ({
-                                  ...prev,
-                                  field1: value,
-                                }))
-                              }
-                              defaultValue={selectedAssets.field1}
-                            >
-                              <SelectTrigger className="w-[120px]">
-                                <SelectValue placeholder="Select asset" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="XRD">XRD</SelectItem>
-                                <SelectItem value="RAD">RAD</SelectItem>
-                                <SelectItem value="HUD">HUD</SelectItem>
-                              </SelectContent>
-                            </Select>
-                            <FormControl>
-                              <Input
-                                type="number"
-                                placeholder="Amount"
-                                value={field.value || ""}
-                                onChange={(e) =>
-                                  field.onChange(
-                                    parseFloat(e.target.value) || 0
-                                  )
-                                }
-                              />
-                            </FormControl>
-                          </div>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-
-                    {/* Second Asset Input */}
-                    {visibleFields >= 2 && (
-                      <FormField
-                        control={form.control}
-                        name="amount2"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Deposit Asset 2</FormLabel>
-                            <div className="flex items-center space-x-4">
-                              <Select
-                                onValueChange={(value) =>
-                                  setSelectedAssets((prev) => ({
-                                    ...prev,
-                                    field2: value,
-                                  }))
-                                }
-                                defaultValue={selectedAssets.field2}
-                              >
-                                <SelectTrigger className="w-[120px]">
-                                  <SelectValue placeholder="Select asset" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="XRD">XRD</SelectItem>
-                                  <SelectItem value="RAD">RAD</SelectItem>
-                                  <SelectItem value="HUD">HUD</SelectItem>
-                                </SelectContent>
-                              </Select>
-                              <FormControl>
-                                <Input
-                                  type="number"
-                                  placeholder="Amount"
-                                  value={field.value || ""}
-                                  onChange={(e) =>
-                                    field.onChange(
-                                      parseFloat(e.target.value) || 0
-                                    )
-                                  }
-                                />
-                              </FormControl>
-                            </div>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    )}
-
-                    {/* Third Asset Input */}
-                    {visibleFields >= 3 && (
-                      <FormField
-                        control={form.control}
-                        name="amount3"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Deposit Asset 3</FormLabel>
-                            <div className="flex items-center space-x-4">
-                              <Select
-                                onValueChange={(value) =>
-                                  setSelectedAssets((prev) => ({
-                                    ...prev,
-                                    field3: value,
-                                  }))
-                                }
-                                defaultValue={selectedAssets.field3}
-                              >
-                                <SelectTrigger className="w-[120px]">
-                                  <SelectValue placeholder="Select asset" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="XRD">XRD</SelectItem>
-                                  <SelectItem value="RAD">RAD</SelectItem>
-                                  <SelectItem value="HUD">HUD</SelectItem>
-                                </SelectContent>
-                              </Select>
-                              <FormControl>
-                                <Input
-                                  type="number"
-                                  placeholder="Amount"
-                                  value={field.value || ""}
-                                  onChange={(e) =>
-                                    field.onChange(
-                                      parseFloat(e.target.value) || 0
-                                    )
-                                  }
-                                />
-                              </FormControl>
-                            </div>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-                    )}
-
-                    {/* "+" Button to Add More Assets */}
-                    <div className="flex justify-center space-x-4">
-                      {visibleFields < 3 && (
-                        <Button
-                          type="button"
-                          onClick={handleAddAsset}
-                          style={{
-                            backgroundColor: "#070707",
-                            color: "#fcfff7",
-                          }}
-                        >
-                          <PlusIcon className="mr-2" />
-                          Add Asset
-                        </Button>
-                      )}
-
-                      {visibleFields > 1 && (
-                        <Button
-                          type="button"
-                          onClick={handleRemoveAsset}
-                          style={{
-                            backgroundColor: "#070707",
-                            color: "#fcfff7",
-                          }}
-                        >
-                          <MinusIcon className="mr-2" />
-                          Remove Asset
-                        </Button>
-                      )}
-                    </div>
-
-                    <Button
-                      type="submit"
-                      style={{
-                        backgroundColor: "#fb3640",
-                        color: "#fcfff7",
-                      }}
+    <div>
+      <div className="flex flex-col min-h-screen" style={{ backgroundColor: "#fcfff7", color: "#070707" }}>
+        <Navbar />
+        <main className="p-4">
+          <div className="pt-20 flex justify-center items-center px-4">
+            <div className="text-4xl mx-auto font-normal">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Deposit Collateral</CardTitle>
+                  <CardDescription>
+                    Choose assets of your choice, estimate the loan in Radish, and
+                    deposit collateral in the assets of your choice.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="relative">
+                  <Form {...form}>
+                    <form
+                      onSubmit={form.handleSubmit(onEstimateLoan)}
+                      className="space-y-8"
                     >
-                      Estimate Loan
-                    </Button>
+                      {/* First Asset Input */}
+                      <FormField
+                        control={form.control}
+                        name="amount1"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Deposit Asset 1</FormLabel>
+                            <div className="flex items-center space-x-4">
+                              <Select
+                                onValueChange={(value) =>
+                                  setSelectedAssets((prev) => ({
+                                    ...prev,
+                                    field1: value,
+                                  }))
+                                }
+                                defaultValue={selectedAssets.field1}
+                              >
+                                <SelectTrigger className="w-[120px]">
+                                  <SelectValue placeholder="Select asset" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="XRD">XRD</SelectItem>
+                                  <SelectItem value="RAD">RAD</SelectItem>
+                                  <SelectItem value="HUD">HUD</SelectItem>
+                                </SelectContent>
+                              </Select>
+                              <FormControl>
+                                <Input
+                                  type="number"
+                                  placeholder="Amount"
+                                  value={field.value || ""}
+                                  onChange={(e) =>
+                                    field.onChange(
+                                      parseFloat(e.target.value) || 0
+                                    )
+                                  }
+                                />
+                              </FormControl>
+                            </div>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
 
-                    {estimatedValueWithdraw > 0 && (
-                      <div className="mt-4 p-4 rounded-lg shadow-sm">
-                        <p style={{
-                          color: "#070707",
-                        }} className="text-lg font-semibold">
-                          Estimated Value:
-                          <span className="text-primary font-bold"> {estimatedValueWithdraw} Radish</span>
-                        </p>
-                        <div className="mt-4">
+                      {/* Second Asset Input */}
+                      {visibleFields >= 2 && (
+                        <FormField
+                          control={form.control}
+                          name="amount2"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Deposit Asset 2</FormLabel>
+                              <div className="flex items-center space-x-4">
+                                <Select
+                                  onValueChange={(value) =>
+                                    setSelectedAssets((prev) => ({
+                                      ...prev,
+                                      field2: value,
+                                    }))
+                                  }
+                                  defaultValue={selectedAssets.field2}
+                                >
+                                  <SelectTrigger className="w-[120px]">
+                                    <SelectValue placeholder="Select asset" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="XRD">XRD</SelectItem>
+                                    <SelectItem value="RAD">RAD</SelectItem>
+                                    <SelectItem value="HUD">HUD</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                                <FormControl>
+                                  <Input
+                                    type="number"
+                                    placeholder="Amount"
+                                    value={field.value || ""}
+                                    onChange={(e) =>
+                                      field.onChange(
+                                        parseFloat(e.target.value) || 0
+                                      )
+                                    }
+                                  />
+                                </FormControl>
+                              </div>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      )}
+
+                      {/* Third Asset Input */}
+                      {visibleFields >= 3 && (
+                        <FormField
+                          control={form.control}
+                          name="amount3"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Deposit Asset 3</FormLabel>
+                              <div className="flex items-center space-x-4">
+                                <Select
+                                  onValueChange={(value) =>
+                                    setSelectedAssets((prev) => ({
+                                      ...prev,
+                                      field3: value,
+                                    }))
+                                  }
+                                  defaultValue={selectedAssets.field3}
+                                >
+                                  <SelectTrigger className="w-[120px]">
+                                    <SelectValue placeholder="Select asset" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="XRD">XRD</SelectItem>
+                                    <SelectItem value="RAD">RAD</SelectItem>
+                                    <SelectItem value="HUD">HUD</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                                <FormControl>
+                                  <Input
+                                    type="number"
+                                    placeholder="Amount"
+                                    value={field.value || ""}
+                                    onChange={(e) =>
+                                      field.onChange(
+                                        parseFloat(e.target.value) || 0
+                                      )
+                                    }
+                                  />
+                                </FormControl>
+                              </div>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                      )}
+
+                      {/* "+" Button to Add More Assets */}
+                      <div className="flex justify-center space-x-4">
+                        {visibleFields < 3 && (
                           <Button
                             type="button"
-                            onClick={() => onDepositAssets(form.getValues())}
+                            onClick={handleAddAsset}
                             style={{
-                              backgroundColor: "#fb3640",
+                              backgroundColor: "#070707",
                               color: "#fcfff7",
                             }}
                           >
-                            Deposit Assets
+                            <PlusIcon className="mr-2" />
+                            Add Asset
                           </Button>
-                        </div>
+                        )}
+
+                        {visibleFields > 1 && (
+                          <Button
+                            type="button"
+                            onClick={handleRemoveAsset}
+                            style={{
+                              backgroundColor: "#070707",
+                              color: "#fcfff7",
+                            }}
+                          >
+                            <MinusIcon className="mr-2" />
+                            Remove Asset
+                          </Button>
+                        )}
                       </div>
-                    )}
+
+                      <Button
+                        type="submit"
+                        style={{
+                          backgroundColor: "#fb3640",
+                          color: "#fcfff7",
+                        }}
+                      >
+                        Estimate Loan
+                      </Button>
+
+                      {estimatedValueWithdraw > 0 && (
+                        <div className="mt-4 p-4 rounded-lg shadow-sm">
+                          <p style={{
+                            color: "#070707",
+                          }} className="text-lg font-semibold">
+                            Estimated Value:
+                            <span className="text-primary font-bold"> {estimatedValueWithdraw} Radish</span>
+                          </p>
+                          <div className="mt-4">
+                            <Button
+                              type="button"
+                              onClick={() => onDepositAssets(form.getValues())}
+                              style={{
+                                backgroundColor: "#fb3640",
+                                color: "#fcfff7",
+                              }}
+                            >
+                              Deposit Assets
+                            </Button>
+                          </div>
+                        </div>
+                      )}
 
 
-                  </form>
-                </Form>
-              </CardContent>
-            </Card>
+                    </form>
+                  </Form>
+                </CardContent>
+              </Card>
+            </div>
           </div>
+        </main>
+        <div className="absolute inset-0 pointer-events-none z-0">
+          <ShootingStars />
+          <StarsBackground />
         </div>
-      </main>
-      <div className="absolute inset-0 pointer-events-none z-0">
-        <ShootingStars />
-        <StarsBackground />
       </div>
+      <Footer />
     </div>
   );
 }

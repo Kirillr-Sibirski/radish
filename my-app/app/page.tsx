@@ -5,36 +5,36 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import { ShootingStars } from "@/components/ui/shooting-stars";
 import { StarsBackground } from "@/components/ui/stars-background";
-import { ContainerScroll } from "@/components/ui/container-scroll-animation";
+import { Footer } from "@/components/ui/footer";
 
 export default function Home() {
   const words = ["This is Radish", "Built on Radix"];
   const description =
-    "Radish is an innovative lending platform built on the Radix blockchain, leveraging asset-oriented programming to offer multi-token collateral support. Diversify your collateral and mint stablecoins for your financial needs.";
+    "Radish is an innovative lending platform built on Radix. Diversify your collateral and mint stablecoins for your financial needs.";
 
   return (
     <div style={{ backgroundColor: "#fcfff7", color: "#070707" }}>
       <Navbar />
-      <main className="p-4 h-screen flex flex-col justify-center items-center">
-        <div className="text-center">
-          <div className="text-8xl font-normal mb-6" style={{ color: "#070707" }}>
-            <FlipWords words={words} />
+      <main className="p-4 h-screen">
+        <div className="h-full flex justify-center items-center px-4">
+          <div className="text-center text-8xl font-normal" style={{ color: "#070707" }}>
+            <FlipWords words={words} /> <br />
+
+            {/* Description with limited width */}
+            <p className="text-xl mt-4 max-w-xl mx-auto" style={{ color: "#070707" }}>
+              {description}
+            </p>
+
+            {/* Button */}
+            <Link href="/app">
+              <Button
+                className="px-10 py-8 text-lg" // Larger padding and font size
+                style={{ backgroundColor: "#fb3640", color: "#fcfff7" }}
+              >
+                Launch App
+              </Button>
+            </Link>
           </div>
-
-          {/* Description */}
-          <p className="text-xl max-w-2xl mx-auto mb-12" style={{ color: "#070707" }}>
-            {description}
-          </p>
-
-          {/* Button */}
-          <Link href="/app">
-            <Button
-              className="px-10 py-8 text-lg" // Larger padding and font size
-              style={{ backgroundColor: "#fb3640", color: "#fcfff7" }}
-            >
-              Launch App
-            </Button>
-          </Link>
         </div>
       </main>
 
@@ -42,6 +42,7 @@ export default function Home() {
         <ShootingStars />
         <StarsBackground />
       </div>
+      <Footer />
     </div>
   );
 }
