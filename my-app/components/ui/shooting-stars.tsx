@@ -45,11 +45,11 @@ export const ShootingStars: React.FC<ShootingStarsProps> = ({
   minSpeed = 10,
   maxSpeed = 30,
   minDelay = 600,
-  maxDelay = 4200,
+  maxDelay = 3000,
   starColor = "#fb3640",
   trailColor = "#fb3640",
-  starWidth = 20,
-  starHeight = 2,
+  starWidth = 30,
+  starHeight = 4,
   className,
 }) => {
   const [star, setStar] = useState<ShootingStar | null>(null);
