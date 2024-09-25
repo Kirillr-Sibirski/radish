@@ -50,7 +50,9 @@ export default function App() {
   });
 
   const [radishAmountReturned, setRadishAmountReturned] = useState(0);
-  const [userHasLoan, setUserHasLoan] = useState(true);
+  const [userHasLoan, setUserHasLoan] = useState(false);
+  const [estimatedValueWithdraw, setEstimatedValueWithdraw] = useState(0);
+  const [radishAmount, setRadishAmount] = useState(0); // Amount to deposit
 
   useEffect(() => {
     //here, need to check whether the user already has a loan NFT
@@ -70,6 +72,17 @@ export default function App() {
     alert(`Deposited assets. You get Radish.`);
   }
 
+  const handleEstimateWithdraw = () => {
+    // Simulate an estimate calculation (e.g., Radish * 1.2 for example)
+    const estimate = radishAmount * 1.2;
+    setEstimatedValueWithdraw(estimate);
+  };
+
+  // Function to handle withdrawal (dummy function)
+  const handleWithdraw = () => {
+    alert("Withdraw initiated!");
+  };
+
   // If the userHasLoan is true, display different content
   if (userHasLoan) {
     return (
@@ -78,8 +91,38 @@ export default function App() {
         <main className="p-4">
           <div className="h-[40rem] flex justify-center items-center px-4">
             <div className="text-4xl mx-auto font-normal text-neutral-600 dark:text-neutral-400">
-              <h1>userHasLoan is TRUE</h1>
-              <p>This is the alternative content displayed when the userHasLoan is true.</p>
+              <h1>Deposit Radish</h1>
+              <Form {...form}>
+                <form className="space-y-8">
+                  <FormItem>
+                    <FormLabel>Radish Amount</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="number"
+                        placeholder="Enter Radish amount"
+                        value={radishAmount}
+                        onChange={(e) => setRadishAmount(parseFloat(e.target.value) || 0)}
+                        className="w-[200px]"
+                      />
+                    </FormControl>
+                  </FormItem>
+
+                  {/* Estimate button */}
+                  <Button onClick={handleEstimateWithdraw}>Estimate</Button>
+
+                  {/* Output for the estimated value */}
+                  {estimatedValueWithdraw > 0 && (
+                    <div className="mt-4">
+                      <p>Estimated value: {estimatedValueWithdraw} Radish</p>
+                    </div>
+                  )}
+
+                  {/* Withdraw button */}
+                  <div className="mt-4">
+                    <Button onClick={handleWithdraw}>Withdraw</Button>
+                  </div>
+                </form>
+              </Form>
             </div>
           </div>
         </main>
@@ -96,7 +139,7 @@ export default function App() {
           <div className="text-4xl mx-auto font-normal text-neutral-600 dark:text-neutral-400">
             <Form {...form}>
               <form onSubmit={form.handleSubmit(onEstimateLoan)} className="space-y-8">
-                
+
                 {/* First Input Field */}
                 <FormField
                   control={form.control}
@@ -220,16 +263,19 @@ export default function App() {
                   )}
                 />
 
-                {/* Estimate Loan Button */}
                 <Button type="submit">Estimate Loan</Button>
 
-                {/* Display Radish Return */}
-                <div className="mt-4">You will get {radishAmountReturned} Radish.</div>
+                {radishAmountReturned > 0 && (
+                  <div className="mt-4">
+                    <p>Estimated value: {radishAmountReturned} Radish</p>
+                  </div>
+                )}
 
-                {/* New Deposit Assets Button */}
-                <Button type="button" onClick={() => onDepositAssets(form.getValues())}>
-                  Deposit Assets
-                </Button>
+                <div className="mt-4">
+                  <Button type="button" onClick={() => onDepositAssets(form.getValues())}>
+                    Deposit Assets
+                  </Button>
+                </div>
 
               </form>
             </Form>
