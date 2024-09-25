@@ -1,47 +1,116 @@
 use scrypto::prelude::*;
 
+type LazySet<K> = KeyValueStore<K, ()>;
+
+#[derive(NonFungibleData, ScryptoSbor, Clone)]
+struct Borrower {
+    collateral: Vec<Decimal>,
+    loan_amount: Decimal,
+}
+
 #[blueprint]
-mod hello {
-    struct Hello {
-        // Define what resources and data will be managed by Hello components
-        sample_vault: Vault,
+mod radish {
+    enable_method_auth! {
+        roles {
+            borrower => updatable_by: [OWNER];
+        },
+        methods {
+            estimate_loan => PUBLIC;
+            get_loan => PUBLIC;
+            repay_loan => restrict_to: [borrower];
+        }
     }
 
-    impl Hello {
-        // Implement the functions and methods which will manage those resources and data
+    struct Radish {
+        // Radish Resources
+        radish_manager: ResourceManager,
+        radish_resource: ResourceAddress,
+        radish_vault: Vault,
+        // Borrower Resources
+        borrower_manager: ResourceManager,
+        borrowers: LazySet<NonFungibleGlobalId>,
+        collateral_vaults: KeyValueStore<ResourceAddress, Vault>,
+        // Badges
+    }
 
-        // This is a function, and can be called directly on the blueprint once deployed
-        pub fn instantiate_hello() -> Global<Hello> {
-            // Create a new token called "HelloToken," with a fixed supply of 1000, and put that supply into a bucket
-            let my_bucket: Bucket = ResourceBuilder::new_fungible(OwnerRole::None)
-                .divisibility(DIVISIBILITY_MAXIMUM)
-                .metadata(metadata! {
-                    init {
-                        "name" => "HelloToken", locked;
-                        "symbol" => "HT", locked;
-                    }
-                })
-                .mint_initial_supply(1000)
+    impl Radish {
+        pub fn instantise_radish() -> (Global<Radish>, Bucket) {
+            let (address_reservation, component_address) =
+                Runtime::allocate_component_address(Radish::blueprint_id());
+
+            /* ------------------ Badges ------------------ */
+            let owner_badge: Bucket = ResourceBuilder::new_fungible(OwnerRole::None)
+                .metadata(metadata!(init {
+                    "name" => "Radish Lending Platform Owner Badge", locked;
+                }))
+                .divisibility(DIVISIBILITY_NONE)
+                .mint_initial_supply(1)
                 .into();
 
-            // Instantiate a Hello component, populating its vault with our supply of 1000 HelloToken
-            Self {
-                sample_vault: Vault::with_bucket(my_bucket),
+            /* ------------------ Buckets ----------------- */
+            // Radish
+            let radish_bucket: Bucket = ResourceBuilder::new_fungible(OwnerRole::None)
+                .metadata(metadata!(init {
+                    "name" => "Radish", locked;
+                    "symbol" => "RSH", locked;
+                    // "description" => "Radish provided by the Radish Lending Platform", locked;
+                }))
+                .mint_roles(mint_roles! {
+                    minter => rule!(require(global_caller(component_address)));
+                    minter_updater => rule!(deny_all);
+                })
+                .mint_initial_supply(10000)
+                .into();
+            
+            // Borrower
+            let borrower_manager: ResourceManager = ResourceBuilder::new_integer_non_fungible::<Borrower>(OwnerRole::None)
+                .metadata(metadata!(init {
+                    "name" => "Radish Borrower Badge", locked;
+                }))
+                .mint_roles(mint_roles! {
+                    minter => rule!(require(global_caller(component_address)));
+                    minter_updater => rule!(deny_all);
+                })
+                .recall_roles(recall_roles! {
+                    recaller => rule!(require(global_caller(component_address)));
+                    recaller_updater => rule!(deny_all);
+                })
+                .burn_roles(burn_roles! {
+                    burner => rule!(require(global_caller(component_address)));
+                    burner_updater => rule!(deny_all);
+                })
+                .create_with_no_initial_supply();
+
+            let collateral_vaults = KeyValueStore::new();
+            collateral_vaults.insert(XRD, Vault::new(XRD));
+
+            /* --------------- Instantising --------------- */
+            let component = Radish {
+                // Radish Resources
+                radish_manager: radish_bucket.resource_manager(),
+                radish_resource: radish_bucket.resource_address(),
+                radish_vault: Vault::with_bucket(radish_bucket),
+                // Borrower Resources
+                borrower_manager,
+                borrowers: KeyValueStore::new(),
+                collateral_vaults,
             }
             .instantiate()
-            .prepare_to_globalize(OwnerRole::None)
-            .globalize()
+            .prepare_to_globalize(OwnerRole::Fixed(rule!(require(
+                owner_badge.resource_address()
+            ))))
+            .with_address(address_reservation)
+            .globalize();
+
+            (component, owner_badge)
         }
 
-        // This is a method, because it needs a reference to self.  Methods can only be called on components
-        pub fn free_token(&mut self) -> Bucket {
-            info!(
-                "My balance is: {} HelloToken. Now giving away a token!",
-                self.sample_vault.amount()
-            );
-            // If the semi-colon is omitted on the last line, the last value seen is automatically returned
-            // In this case, a bucket containing 1 HelloToken is returned
-            self.sample_vault.take(1)
+        pub fn estimate_loan(&self) {}
+
+        pub fn get_loan(&mut self, mut collateral: Vec<Bucket>) -> Bucket {
+
         }
+
+        pub fn repay_loan(&mut self) {}
     }
 }
