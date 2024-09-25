@@ -26,9 +26,10 @@ mod radish {
         radish_manager: ResourceManager,
         radish_resource: ResourceAddress,
         radish_vault: Vault,
-        // Borrower Resources
+        // Borrower Resources        
         borrower_manager: ResourceManager,
         borrowers: LazySet<NonFungibleGlobalId>,
+        collateral_addresses: Vec<ResourceAddress>,
         collateral_vaults: KeyValueStore<ResourceAddress, Vault>,
         // Badges
         // ...
@@ -85,8 +86,12 @@ mod radish {
                 })
                 .create_with_no_initial_supply();
 
+            let collateral_addresses = vec![XRD];
             let collateral_vaults = KeyValueStore::new();
-            collateral_vaults.insert(XRD, Vault::new(XRD));
+            
+            for address in &collateral_addresses {
+                collateral_vaults.insert(address.clone(), Vault::new(address.clone()));
+            }
             
 
             /* ------------ Placeholder Oracle ------------ */
@@ -104,6 +109,7 @@ mod radish {
                 // Borrower Resources
                 borrower_manager,
                 borrowers: KeyValueStore::new(),
+                collateral_addresses,
                 collateral_vaults,
                 // Badges
                 // ...
@@ -121,7 +127,7 @@ mod radish {
         }
 
         pub fn estimate_loan(&self, collateral: Vec<Bucket>) -> Decimal {
-            info!("[estimate_loan] collateral: {}", collateral);
+            info!("[estimate_loan] collateral: {:?}", collateral);
 
             // Function Validation
             assert!(self.placeholder_oracle_collateral_prices.get(&self.radish_resource).is_some(), "RSH price not tracked by oracle");
@@ -140,7 +146,7 @@ mod radish {
             
             let estimated_rsh: Decimal = estimated_usd / *self.placeholder_oracle_collateral_prices.get(&self.radish_resource).unwrap();
             
-            info!("Collateral in USD: {}\nCollateral in RSH: {}", estimated_usd, estimated_rsh);
+            info!("Collateral in USD: {:?}\nCollateral in RSH: {:?}", estimated_usd, estimated_rsh);
             estimated_rsh
         }
 
