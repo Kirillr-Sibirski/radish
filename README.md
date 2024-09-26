@@ -9,6 +9,9 @@ This repository contains two primary components:
 - **Scrypto blueprints** for smart contracts.
 - **Next.js frontend** with custom shadCN components for user interaction.
 
+[Pitch Deck](https://docs.google.com/presentation/d/1cyRt_FNlBnn0lmo-lSLnMutafHp2g7d_hWwUQlDiL-Q/edit?usp=sharing)
+[Demo][youtube.com]
+
 ## Features
 
 Radish offers the following key functionalities:
