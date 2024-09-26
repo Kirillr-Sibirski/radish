@@ -4,19 +4,12 @@ CALL_METHOD
     Decimal("5000");
 
 CALL_METHOD
-  Address("${account}")
-  "withdraw"
-  Address("${borrower_badge}")
-  Decimal("1");
-
-TAKE_FROM_WORKTOP
+    Address("${account}")
+    "create_proof_of_non_fungibles"
     Address("${borrower_badge}")
-    Decimal("1")
-    Bucket("Borrower_Badge");
+    Array<NonFungibleLocalId>(NonFungibleLocalId("${borrower_badge_id}"));
 
-CREATE_PROOF_FROM_BUCKET_OF_NON_FUNGIBLES
-    Bucket("Borrower_Badge")
-    Array<NonFungibleLocalId>(NonFungibleLocalId("${borrower_badge_id}"))
+POP_FROM_AUTH_ZONE 
     Proof("Proof_${borrower_badge_id}");
 
 CALL_METHOD
