@@ -3,10 +3,12 @@ use scrypto::prelude::*;
 
 
 /* ------------------- Misc. ------------------ */
+type AddrAmountMap = HashMap<ResourceAddress, Decimal>;
+
 #[derive(NonFungibleData, ScryptoSbor, Clone)]
 struct Borrower {
     #[mutable]
-    collateral: HashMap<ResourceAddress, Decimal>, // Potentially should be replaced with KeyValueStore
+    collateral: AddrAmountMap, // Potentially should be replaced with KeyValueStore
     #[mutable]
     debt: Decimal,
 }
@@ -16,13 +18,16 @@ struct EstimateLoanEvent {
     value: Decimal,
 }
 
+#[derive(ScryptoSbor, ScryptoEvent)]
+struct EstimateRepayEvent {
+    released: AddrAmountMap,
+}
+
 
 /* ----------------- Blueprint ---------------- */
 #[blueprint]
-#[events(EstimateLoanEvent)]
+#[events(EstimateLoanEvent, EstimateRepayEvent)]
 mod radish {
-    use std::collections::HashMap;
-
     enable_method_auth! {
         roles {
             borrower => updatable_by: [OWNER];
@@ -30,7 +35,7 @@ mod radish {
         methods {
             estimate_loan => PUBLIC;
             get_loan => PUBLIC;
-            estimate_repay => restrict_to: [borrower];
+            estimate_repay => PUBLIC;
         }
     }
 
@@ -143,7 +148,7 @@ mod radish {
         }
 
         // HashMap alright here since max 3-4 K-V pairs passed
-        pub fn estimate_loan(&self, collateral: HashMap<ResourceAddress, Decimal>) -> Decimal {
+        pub fn estimate_loan(&self, collateral: AddrAmountMap) -> Decimal {
             info!("[estimate_loan] collateral: {:?}", collateral);
 
             /* ---------------- Validation ---------------- */
@@ -183,7 +188,7 @@ mod radish {
             assert!(collateral.len() > 0, "No buckets provided");
             info!("[get_loan] Collateral: {:?} {:?}", &collateral, &collateral[0].amount());
             
-            let resource_map: HashMap<ResourceAddress, Decimal> = collateral.iter()
+            let resource_map: AddrAmountMap = collateral.iter()
                 .map(|bucket| (bucket.resource_address(), bucket.amount()))
                 .collect();
             let estimated_rsh: Decimal = self.estimate_loan(resource_map.clone());
@@ -204,13 +209,15 @@ mod radish {
             (borrower_badge, self.radish_vault.take(estimated_rsh))
         }
 
-        pub fn estimate_repay(&self, borrower_badge: Bucket, repayment: Decimal) -> HashMap<ResourceAddress, Decimal> {
-            assert_eq!(borrower_badge.resource_address(), self.borrower_manager.address(), "Invalid borrower badge");
-            assert_eq!(borrower_badge.amount(), Decimal::ZERO, "Only a single borrower badge must be provided");
-
-            assert!(repayment >= Decimal::ZERO, "Cannot provide negative Radish for repayment");
+        pub fn estimate_repay(&self, borrower_proof: NonFungibleProof, repayment: Decimal) -> AddrAmountMap {
+            // assert_eq!(borrower_badge.amount(), Decimal::ONE, "Only a single borrower badge must be provided");
+            assert!(repayment > Decimal::ZERO, "Cannot provide negative Radish for repayment");
             
-            let borrower_data: Borrower = borrower_badge.as_non_fungible().non_fungible().data();
+            // let borrower_data: Borrower = borrower_proof.as_non_fungible().non_fungible().data();
+            let borrower_data = borrower_proof
+                .check_with_message(self.borrower_manager.address(), "Invalid borrower badge")
+                .non_fungible::<Borrower>()
+                .data();
 
             // If loan fully repaid with potential excess
             if repayment >= borrower_data.debt {
@@ -218,14 +225,16 @@ mod radish {
                 estimate.insert(self.radish_resource, repayment.checked_sub(borrower_data.debt).unwrap());
     
                 info!("[estimate_repay] Estimated repay with excess: {:?}", &estimate);
+                Runtime::emit_event(EstimateRepayEvent { released: estimate.clone() });
                 estimate
             } else {
                 let repayment_ratio = repayment.checked_div(borrower_data.debt).unwrap();
-                let estimate: HashMap<ResourceAddress, Decimal> = borrower_data.collateral.iter()
+                let estimate: AddrAmountMap = borrower_data.collateral.iter()
                     .map(|(address, amount)| (*address, amount.checked_mul(repayment_ratio).unwrap()))
                     .collect();
 
                 info!("[estimate_repay] Estimated partial repay with ratio {:?}: {:?}", &repayment_ratio, &estimate);
+                Runtime::emit_event(EstimateRepayEvent { released: estimate.clone() });
                 estimate
             }
         }

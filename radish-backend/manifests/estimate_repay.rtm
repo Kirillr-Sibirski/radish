@@ -1,0 +1,31 @@
+CALL_METHOD
+    Address("component_sim1cptxxxxxxxxxfaucetxxxxxxxxx000527798379xxxxxxxxxhkrefh")
+    "lock_fee"
+    Decimal("5000");
+
+CALL_METHOD
+  Address("${account}")
+  "withdraw"
+  Address("${borrower_badge}")
+  Decimal("1");
+
+TAKE_FROM_WORKTOP
+    Address("${borrower_badge}")
+    Decimal("1")
+    Bucket("Borrower_Badge");
+
+CREATE_PROOF_FROM_BUCKET_OF_NON_FUNGIBLES
+    Bucket("Borrower_Badge")
+    Array<NonFungibleLocalId>(NonFungibleLocalId("${borrower_badge_id}"))
+    Proof("Proof_${borrower_badge_id}");
+
+CALL_METHOD
+    Address("${component}")
+    "estimate_repay"
+    Proof("Proof_${borrower_badge_id}")
+    Decimal("0.6");
+
+CALL_METHOD
+    Address("${account}")
+    "deposit_batch"
+    Expression("ENTIRE_WORKTOP");
