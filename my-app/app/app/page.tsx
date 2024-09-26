@@ -63,7 +63,7 @@ const rdt = RadixDappToolkit({
   logger: Logger(1),
 });
 
-let account:any;
+let account: any;
 rdt.walletApi.setRequestData(DataRequestBuilder.accounts().exactly(1));
 // Subscribe to updates to the user's shared wallet data, then display the account name and address.
 rdt.walletApi.walletData$.subscribe(async (walletData) => {
@@ -73,22 +73,24 @@ rdt.walletApi.walletData$.subscribe(async (walletData) => {
   console.log("Account: ", account);
 });
 
-  const gatewayApi = GatewayApiClient.initialize(rdt.gatewayApi.clientConfig);
+const gatewayApi = GatewayApiClient.initialize(rdt.gatewayApi.clientConfig);
 
-  async function hasBadge() {
-    if (!account) return;
-    // Fetch account state from network
-    const accountState = await gatewayApi.state.getEntityDetailsVaultAggregated(
-      account.address
-    );
+async function hasBadge(_account: any) {
+  if (!_account) return;
+  const accountState = await gatewayApi.state.getEntityDetailsVaultAggregated(
+    _account.address
+  );
 
-    // Get the pool unit balance from the account state
-    const getNFTBalance =
-      accountState.non_fungible_resources.items.find(
-        (fr) => fr.resource_address === nftBadge_Resource
-      )?.vaults.items[0] ?? 0;
-    // Update displayed pool unit balance
-    console.log("Has NFT????", getNFTBalance);
+  const getNFTBalance =
+    accountState.non_fungible_resources.items.find(
+      (fr) => fr.resource_address === nftBadge_Resource
+    )?.vaults.items[0] ?? 0;
+  console.log("!!!!!", getNFTBalance)
+  if (getNFTBalance != 0 || getNFTBalance != null) {
+    return true;
+  } else {
+    return false;
+  }
 }
 
 export default function App() {
@@ -113,10 +115,20 @@ export default function App() {
   const [estimatedValueWithdraw, setEstimatedValueWithdraw] = useState(0);
   const [radishAmount, setRadishAmount] = useState(0); // Amount to deposit
 
-
-
   useEffect(() => {
-    hasBadge();
+    const checkBadge = async () => {
+      if (account) {
+        const hasNFTBadge = await hasBadge(account);
+        console.log("!!!!!", hasNFTBadge)
+        if (hasNFTBadge) {
+          setUserHasLoan(true);
+        } else {
+          setUserHasLoan(false);
+        }
+      }
+    };
+
+    checkBadge();
   }, []);
 
   async function onEstimateLoan(values: z.infer<typeof formSchema>) {
