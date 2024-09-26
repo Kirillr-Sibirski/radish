@@ -57,7 +57,8 @@ export function generateEstimateRepay(
   account_address: string,
   component_address: string,
   borrower_badge_address: string,
-  borrower_badge_id: string
+  borrower_badge_id: string,
+  repay_amount: number,
 ) {
   return `CALL_METHOD
     Address("${account_address}")
@@ -72,7 +73,7 @@ export function generateEstimateRepay(
     Address("${component_address}")
     "estimate_repay"
     Proof("Proof_${borrower_badge_id}")
-    Decimal("0.6");
+    Decimal("${repay_amount}");
 
   CALL_METHOD
     Address("${account_address}")
