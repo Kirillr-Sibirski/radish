@@ -213,8 +213,6 @@ export default function App() {
     checkBadge();
   }, [account]);
 
-
-
   async function onEstimateLoan(values: z.infer<typeof formSchema>) {
     const mapCoins = new Map<string, number>([
       [XRD_Resource, values.amount1 ?? 0], // XRD
@@ -270,7 +268,7 @@ export default function App() {
       result.value.transactionIntentHash
     );
     console.log("Committed: ", committedDetailsJson);
-    
+    alert("Collateral successfully deposited.")
   }
 
 
@@ -346,6 +344,7 @@ export default function App() {
       result.value.transactionIntentHash
     );
     console.log("Committed: ", committedDetailsJson);
+    alert("Loan successfully repaid.")
   }
 
   if (userHasLoan) {
