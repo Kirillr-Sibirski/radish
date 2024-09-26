@@ -56,29 +56,20 @@ export function generateGetLoan(
 export function generateEstimateRepay(
   account_address: string,
   component_address: string,
-  borrower_badge_address: string,
   borrower_badge_id: string,
   repay_amount: number
 ) {
   return `CALL_METHOD
-    Address("${account_address}")
-    "create_proof_of_non_fungibles"
-    Address("${borrower_badge_address}")
-    Array<NonFungibleLocalId>(NonFungibleLocalId("${borrower_badge_id}"));
-
-  POP_FROM_AUTH_ZONE 
-    Proof("Proof_${borrower_badge_id}");
-
-  CALL_METHOD
     Address("${component_address}")
     "estimate_repay"
-    Proof("Proof_${borrower_badge_id}")
+    NonFungibleLocalId("${borrower_badge_id}")
     Decimal("${repay_amount}");
 
   CALL_METHOD
     Address("${account_address}")
     "deposit_batch"
-    Expression("ENTIRE_WORKTOP");`;
+    Expression("ENTIRE_WORKTOP");
+  `;
 }
 
 export function generateRepayLoan(
@@ -89,8 +80,7 @@ export function generateRepayLoan(
   rsh_address:       string,
   rsh_amount:        number
 ) {
-  return `
-  CALL_METHOD 
+  return `CALL_METHOD 
     Address("${account_address}") 
     "withdraw"
     Address("${rsh_address}") 
