@@ -38,15 +38,15 @@ import {
   RadixNetwork,
   Logger,
 } from "@radixdlt/radix-dapp-toolkit";
-import { generateEstimateLoan, generateGetLoan } from "../manifests";
+import { generateEstimateLoan, generateEstimateRepay, generateGetLoan } from "../manifests";
 import { GatewayApiClient } from "@radixdlt/babylon-gateway-api-sdk";
 import { Footer } from "@/components/ui/footer";
 import CollateralPieChart from "@/components/ui/pie-chart";
 
-const componentAddress = "component_tdx_2_1cpa35yv2mq98wq3zge7es24ekt8h77svgas9yfulgrh2caslhhc8zn";
-const nftBadge_Resource = "resource_tdx_2_1nfym4crpx56kzvntgc6czk2a539kkp0d4xj25erlsp9zlp2d8u3dj3";
+const componentAddress = "component_tdx_2_1cz35g4w8nt9498q3lflh7ylzvl0zwwr9kcy2smpkng62vpsvl54drz";
+const nftBadge_Resource = "resource_tdx_2_1nt22ndwmgayafkmdqh8r9mwg0xghrntv4aa3fxuhltrk5snth9vc0f";
 const dAppDefinitionAddress = "account_tdx_2_12y47w6wsqelpnucy8zjduqdzdq2vq3m56nsudnf73v6yf7h2n237zw";
-const RSH_Resource = "resource_tdx_2_1th63vvjmc6hd7fjrj94zw6h7uqcx9mx6fy57hnsh3z29gdt2kx2um4";
+const RSH_Resource = "resource_tdx_2_1t49869xvnupdu6vet0j6gftk4lxjq3afegyc54ftm6uz44zx9wrenw";
 
 // Collateral assets - addresses
 const XRD_Resource = "resource_tdx_2_1tknxxxxxxxxxradxrdxxxxxxxxx009923554798xxxxxxxxxtfd2jc";
@@ -154,21 +154,21 @@ export default function App() {
 
 
   const [visibleFields, setVisibleFields] = useState(1); // Control the number of visible asset input fields
-  const [radishAmountReturned, setRadishAmountReturned] = useState(0);
+  const [radishAmountReturned, setRadishAmountReturned] = useState(0.0);
   const [userHasLoan, setUserHasLoan] = useState(false); // To check if the user has an active loan
-  const [estimatedValueWithdraw, setEstimatedValueWithdraw] = useState(0);
-  const [radishAmount, setRadishAmount] = useState(0); // Amount of debt when deposit, fuck knows what this shit is for
-  const [radishAmountBack, setRadishAmountBack] = useState(0); // Estimate withdraw function
-  const [debtValue, setDebtValue] = useState(0); // Loaded from badge NFT
+  const [estimatedValueWithdraw, setEstimatedValueWithdraw] = useState(0.0);
+  const [radishAmount, setRadishAmount] = useState(0.0); // Amount of debt when deposit, fuck knows what this shit is for
+  const [radishAmountBack, setRadishAmountBack] = useState(0.0); // Estimate withdraw function
+  const [debtValue, setDebtValue] = useState(0.0); // Loaded from badge NFT
   const [interestRate, setInterestRate] = useState(10); // Dummy interest rate
   interface AssetStat {
     amount: number;
     assetName: string;
   }
   const [assetsStats, setAssetsStats] = useState<AssetStat[]>([
-    { amount: 0, assetName: "" },
-    { amount: 0, assetName: "" },
-    { amount: 0, assetName: "" }
+    { amount: 0.0, assetName: "" },
+    { amount: 0.0, assetName: "" },
+    { amount: 0.0, assetName: "" }
   ]);
 
 
@@ -282,8 +282,18 @@ export default function App() {
   async function handleEstimateWithdraw(e: any) {
     e.preventDefault(); // prevent page reload
     if (radishAmountBack > 0) {
+      const accountState = await gatewayApi.state.getEntityDetailsVaultAggregated(
+        account.address
+      );
+
+      const nftID = accountState.non_fungible_resources.items.find(
+        (fr) => fr.resource_address === nftBadge_Resource
+      )?.vaults.items[0];
+
+      const nftItem = nftID?.items?.length ? nftID.items[0] : ''; // Fallback to an empty string
+
       const result = await rdt.walletApi.sendTransaction({
-        transactionManifest: "", //generateEstimateLoan(componentAddress, radishAmountBack),   // !!!!!!!!
+        transactionManifest: generateEstimateRepay(account.address, componentAddress, nftBadge_Resource, nftItem, radishAmountBack), //generateEstimateLoan(componentAddress, radishAmountBack),   // !!!!!!!!
       });
 
       if (result.isErr()) throw result.error;
@@ -296,25 +306,16 @@ export default function App() {
       const events = committedDetails.transaction?.receipt?.events || [];
 
       const estimateLoanEvent = events.find(
-        (event: any) => event.name === "EstimateLoanEvent"
+        (event: any) => event.name === "EstimateRepayEvent"
       );
 
       if (estimateLoanEvent) {
         const data = estimateLoanEvent?.data || [];
-
-        if (Array.isArray(data.fields)) {
-          const valueField = data.fields.find(
-            (field: any) => field.field_name === "value"
-          );
-
-          const loanValue = valueField ? valueField.value : null;
-          console.log("Loan Estimated Value: ", loanValue);
-          setEstimatedValueWithdraw(loanValue);
-        } else {
-          console.error("No fields found in the data");
-        }
+        const amountData = data.fields[0].entries[0].value.value;
+        console.log("RESOURCE: ", data.fields[0].entries[0].key.value)
+        //setEstimatedValueWithdraw(data.fields[0].entries[0].value.value)
       } else {
-        console.error("EstimateLoanEvent not found");
+        console.error("EstimateRepayEvent not found");
       }
     }
   };
@@ -391,10 +392,12 @@ export default function App() {
                           <FormLabel>Radish Amount</FormLabel>
                           <FormControl>
                             <Input
-                              type="number"
                               placeholder="Enter Radish amount"
-                              value={radishAmountBack}
-                              onChange={(e) => setRadishAmountBack(parseFloat(e.target.value) || 0)}
+                              step="0.01"
+                              // value={radishAmountBack}
+                              onChange={
+                                (e) => setRadishAmountBack(parseFloat(e.target.value))
+                              }
                               className="w-[200px]"
                             />
                           </FormControl>

@@ -21,9 +21,6 @@ export default function CollateralPieChart({ assetsStats }: { assetsStats: any[]
       value: asset.amount,
     }));
 
-  // Calculate total value
-  const totalValue = chartData.reduce((acc, curr) => acc + curr.value, 0);
-
   return (
     <div className="flex justify-center">
       <PieChart width={200} height={200}>
