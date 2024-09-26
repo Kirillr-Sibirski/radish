@@ -407,13 +407,23 @@ export default function App() {
                             <Input
                               placeholder="Enter Radish amount"
                               step="0.01"
-                              // value={radishAmountBack}
+                              value={radishAmountBack}
                               onChange={
                                 (e) => setRadishAmountBack(parseFloat(e.target.value))
                               }
                               className="w-[200px]"
                             />
                           </FormControl>
+                          <Button
+                            type="button"
+                            onClick={() => setRadishAmountBack(debtValue)} // Set the value to debtValue when clicked
+                            style={{
+                              backgroundColor: "#070707",
+                              color: "#fcfff7",
+                            }}
+                          >
+                            Max
+                          </Button>
                         </FormItem>
 
                         <Button
