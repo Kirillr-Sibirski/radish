@@ -49,13 +49,20 @@ const RSH_Resource = "resource_tdx_2_1th63vvjmc6hd7fjrj94zw6h7uqcx9mx6fy57hnsh3z
 
 // Collateral assets - addresses
 const XRD_Resource = "resource_tdx_2_1tknxxxxxxxxxradxrdxxxxxxxxx009923554798xxxxxxxxxtfd2jc";
-const HUG_Resource = "";
-const USDT_Resource = "";
+const HUG_Resource = "resource__";
+const USDT_Resource = "resource_";
 
 // Collateral assets - tickets
 const asset1 = "XRD"
 const asset2 = "HUG"
 const asset3 = "USDT"
+
+const collateralAssets: Record<string, string> = {
+  "resource_tdx_2_1tknxxxxxxxxxradxrdxxxxxxxxx009923554798xxxxxxxxxtfd2jc": asset1, // XRD Resource Address
+  "resource__": asset2,  // Add HUG Resource Address
+  "resource_": asset3, // Add USDT Resource Address
+};
+
 
 
 // Zod schema for validating the form
@@ -87,6 +94,7 @@ const gatewayApi = GatewayApiClient.initialize(rdt.gatewayApi.clientConfig);
 
 async function hasBadge(_account: any) {
   if (!_account) return;
+
   const accountState = await gatewayApi.state.getEntityDetailsVaultAggregated(
     _account.address
   );
@@ -94,12 +102,36 @@ async function hasBadge(_account: any) {
   const getNFTBalance =
     accountState.non_fungible_resources.items.find(
       (fr) => fr.resource_address === nftBadge_Resource
-    )?.vaults.items[0] ?? 0;
-  console.log("!!!!!", getNFTBalance)
-  if (getNFTBalance != 0 || getNFTBalance != null) {
-    return true;
-  } else {
-    return false;
+    )?.vaults.items[0];
+
+  if (!getNFTBalance) {
+    return { assets: [], badgeValue: 0 };
+  }
+
+  const metadata = await gatewayApi.state.getNonFungibleData(
+    JSON.parse(JSON.stringify(nftBadge_Resource)), [
+    JSON.parse(JSON.stringify(getNFTBalance)).items[0]
+  ]);
+
+  try {
+    const assetsResponse = JSON.parse(JSON.stringify(metadata))[0].data.programmatic_json.fields[0].entries;
+
+    // Map the assets
+    const mappedAssets = assetsResponse.map((entry: any) => ({
+      assetName: entry.key.value, // Resource address (e.g., resource_tdx...)
+      amount: parseFloat(entry.value.value), // Asset amount
+    }));
+
+    console.log("Mapped Assets: ", mappedAssets);
+
+    // Return the mapped assets along with the badge value (if needed)
+    const badgeValue = JSON.parse(JSON.stringify(metadata))[0].data.programmatic_json.fields[1].value;
+
+    return { assets: mappedAssets, badgeValue };
+
+  } catch (e) {
+    console.error("Error parsing assets metadata: ", e);
+    return { assets: [], badgeValue: 0 }; // Return empty assets and badgeValue in case of an error
   }
 }
 
@@ -119,35 +151,61 @@ export default function App() {
     field3: `${asset3}`,
   });
 
+  
   const [visibleFields, setVisibleFields] = useState(1); // Control the number of visible asset input fields
   const [radishAmountReturned, setRadishAmountReturned] = useState(0);
   const [userHasLoan, setUserHasLoan] = useState(false); // To check if the user has an active loan
   const [estimatedValueWithdraw, setEstimatedValueWithdraw] = useState(0);
-  const [radishAmount, setRadishAmount] = useState(0); // Amount of debt when deposit
-  const [radishAmountBack, setRadishAmountBack] = useState(0);
-  const [debtValue, setDebtValue] = useState(0);
-  const [assetsStats, setAssetsStats] = useState([
-    { amount: 0.123, assetName: asset1 },
-    { amount: 23, assetName: asset2 },
-    { amount: 23, assetName: asset3 }
+  const [radishAmount, setRadishAmount] = useState(0); // Amount of debt when deposit, fuck knows what this shit is for
+  const [radishAmountBack, setRadishAmountBack] = useState(0); // Estimate withdraw function
+  const [debtValue, setDebtValue] = useState(0); // Loaded from badge NFT
+  interface AssetStat {
+    amount: number;
+    assetName: string;
+  }
+  const [assetsStats, setAssetsStats] = useState<AssetStat[]>([
+    { amount: 0, assetName: "" },
+    { amount: 0, assetName: "" },
+    { amount: 0, assetName: "" }
   ]);
 
 
   useEffect(() => {
     const checkBadge = async () => {
       if (account) {
-        const hasNFTBadge = await hasBadge(account);
-        console.log("!!!!!", hasNFTBadge)
-        if (hasNFTBadge) {
-          setUserHasLoan(true);
-        } else {
-          setUserHasLoan(false);
+        const result = await hasBadge(account);
+
+        // Ensure result is defined and destructure properly
+        if (result) {
+          const { assets: mappedAssets, badgeValue } = result;
+
+          console.log("Mapped Assets: ", mappedAssets); // Log the mapped assets
+
+          if (badgeValue > 0) {
+            setUserHasLoan(true);
+            setDebtValue(badgeValue);
+
+            // Update the assetsStats state with mapped assets
+            const updatedAssets = mappedAssets.map((asset: any, index: number) => {
+              console.log("AssetName: ", collateralAssets[asset.assetName]);
+              return {
+                amount: asset.amount,
+                assetName: collateralAssets[asset.assetName] || `unknown${index + 1}`, // Fallback in case assetName is missing
+              };
+            });
+
+            setAssetsStats(updatedAssets); // Update assetsStats with the new mapped assets
+          } else {
+            setUserHasLoan(false);
+          }
         }
       }
     };
 
     checkBadge();
-  }, []);
+  }, [account]);
+
+
 
   async function onEstimateLoan(values: z.infer<typeof formSchema>) {
     const mapCoins = new Map<string, number>([
@@ -221,35 +279,35 @@ export default function App() {
 
   async function handleEstimateWithdraw(e: any) {
     e.preventDefault(); // prevent page reload
-    if(radishAmountBack > 0) {
+    if (radishAmountBack > 0) {
       const mapCoins = new Map<string, number>([
         //[XRD_Resource, values.amount1 ?? 0], // XRD
       ]);
       const result = await rdt.walletApi.sendTransaction({
         transactionManifest: generateEstimateLoan(componentAddress, mapCoins),
       });
-  
+
       if (result.isErr()) throw result.error;
-  
+
       const committedDetailsJson = await gatewayApi.transaction.getCommittedDetails(
         result.value.transactionIntentHash
       );
-  
+
       const committedDetails = JSON.parse(JSON.stringify(committedDetailsJson));
       const events = committedDetails.transaction?.receipt?.events || [];
-  
+
       const estimateLoanEvent = events.find(
         (event: any) => event.name === "EstimateLoanEvent"
       );
-  
+
       if (estimateLoanEvent) {
         const data = estimateLoanEvent?.data || [];
-  
+
         if (Array.isArray(data.fields)) {
           const valueField = data.fields.find(
             (field: any) => field.field_name === "value"
           );
-  
+
           const loanValue = valueField ? valueField.value : null;
           console.log("Loan Estimated Value: ", loanValue);
           setEstimatedValueWithdraw(loanValue);
