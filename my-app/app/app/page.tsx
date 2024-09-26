@@ -49,13 +49,20 @@ const RSH_Resource = "resource_tdx_2_1th63vvjmc6hd7fjrj94zw6h7uqcx9mx6fy57hnsh3z
 
 // Collateral assets - addresses
 const XRD_Resource = "resource_tdx_2_1tknxxxxxxxxxradxrdxxxxxxxxx009923554798xxxxxxxxxtfd2jc";
-const HUG_Resource = "";
-const USDT_Resource = "";
+const HUG_Resource = "resource__";
+const USDT_Resource = "resource_";
 
 // Collateral assets - tickets
 const asset1 = "XRD"
 const asset2 = "HUG"
 const asset3 = "USDT"
+
+const collateralAssets: Record<string, string> = {
+  "resource_tdx_2_1tknxxxxxxxxxradxrdxxxxxxxxx009923554798xxxxxxxxxtfd2jc": asset1, // XRD Resource Address
+  "resource__": asset2,  // Add HUG Resource Address
+  "resource_": asset3, // Add USDT Resource Address
+};
+
 
 
 // Zod schema for validating the form
@@ -87,6 +94,7 @@ const gatewayApi = GatewayApiClient.initialize(rdt.gatewayApi.clientConfig);
 
 async function hasBadge(_account: any) {
   if (!_account) return;
+
   const accountState = await gatewayApi.state.getEntityDetailsVaultAggregated(
     _account.address
   );
@@ -94,12 +102,36 @@ async function hasBadge(_account: any) {
   const getNFTBalance =
     accountState.non_fungible_resources.items.find(
       (fr) => fr.resource_address === nftBadge_Resource
-    )?.vaults.items[0] ?? 0;
-  console.log("!!!!!", getNFTBalance)
-  if (getNFTBalance != 0 || getNFTBalance != null) {
-    return true;
-  } else {
-    return false;
+    )?.vaults.items[0];
+
+  if (!getNFTBalance) {
+    return { assets: [], badgeValue: 0 };
+  }
+
+  const metadata = await gatewayApi.state.getNonFungibleData(
+    JSON.parse(JSON.stringify(nftBadge_Resource)), [
+    JSON.parse(JSON.stringify(getNFTBalance)).items[0]
+  ]);
+
+  try {
+    const assetsResponse = JSON.parse(JSON.stringify(metadata))[0].data.programmatic_json.fields[0].entries;
+
+    // Map the assets
+    const mappedAssets = assetsResponse.map((entry: any) => ({
+      assetName: entry.key.value, // Resource address (e.g., resource_tdx...)
+      amount: parseFloat(entry.value.value), // Asset amount
+    }));
+
+    console.log("Mapped Assets: ", mappedAssets);
+
+    // Return the mapped assets along with the badge value (if needed)
+    const badgeValue = JSON.parse(JSON.stringify(metadata))[0].data.programmatic_json.fields[1].value;
+
+    return { assets: mappedAssets, badgeValue };
+
+  } catch (e) {
+    console.error("Error parsing assets metadata: ", e);
+    return { assets: [], badgeValue: 0 }; // Return empty assets and badgeValue in case of an error
   }
 }
 
@@ -114,39 +146,66 @@ export default function App() {
   });
 
   const [selectedAssets, setSelectedAssets] = useState({
-    field1: "XRD",
-    field2: "RAD",
-    field3: "HUD",
+    field1: `${asset1}`,
+    field2: `${asset2}`,
+    field3: `${asset3}`,
   });
+
 
   const [visibleFields, setVisibleFields] = useState(1); // Control the number of visible asset input fields
   const [radishAmountReturned, setRadishAmountReturned] = useState(0);
   const [userHasLoan, setUserHasLoan] = useState(false); // To check if the user has an active loan
   const [estimatedValueWithdraw, setEstimatedValueWithdraw] = useState(0);
-  const [radishAmount, setRadishAmount] = useState(0); // Amount to deposit
-  const [debtValue, setDebtValue] = useState(0);
-  const [assetsStats, setAssetsStats] = useState([
-    { amount: 0.123, assetName: asset1 },
-    { amount: 23, assetName: asset2 },
-    { amount: 23, assetName: asset3 }
+  const [radishAmount, setRadishAmount] = useState(0); // Amount of debt when deposit, fuck knows what this shit is for
+  const [radishAmountBack, setRadishAmountBack] = useState(0); // Estimate withdraw function
+  const [debtValue, setDebtValue] = useState(0); // Loaded from badge NFT
+  interface AssetStat {
+    amount: number;
+    assetName: string;
+  }
+  const [assetsStats, setAssetsStats] = useState<AssetStat[]>([
+    { amount: 0, assetName: "" },
+    { amount: 0, assetName: "" },
+    { amount: 0, assetName: "" }
   ]);
 
 
   useEffect(() => {
     const checkBadge = async () => {
       if (account) {
-        const hasNFTBadge = await hasBadge(account);
-        console.log("!!!!!", hasNFTBadge)
-        if (hasNFTBadge) {
-          setUserHasLoan(true);
-        } else {
-          setUserHasLoan(false);
+        const result = await hasBadge(account);
+
+        // Ensure result is defined and destructure properly
+        if (result) {
+          const { assets: mappedAssets, badgeValue } = result;
+
+          console.log("Mapped Assets: ", mappedAssets); // Log the mapped assets
+
+          if (badgeValue > 0) {
+            setUserHasLoan(true);
+            setDebtValue(badgeValue);
+
+            // Update the assetsStats state with mapped assets
+            const updatedAssets = mappedAssets.map((asset: any, index: number) => {
+              console.log("AssetName: ", collateralAssets[asset.assetName]);
+              return {
+                amount: asset.amount,
+                assetName: collateralAssets[asset.assetName] || `unknown${index + 1}`, // Fallback in case assetName is missing
+              };
+            });
+
+            setAssetsStats(updatedAssets); // Update assetsStats with the new mapped assets
+          } else {
+            setUserHasLoan(false);
+          }
         }
       }
     };
 
     checkBadge();
-  }, []);
+  }, [account]);
+
+
 
   async function onEstimateLoan(values: z.infer<typeof formSchema>) {
     const mapCoins = new Map<string, number>([
@@ -206,24 +265,59 @@ export default function App() {
   }
 
 
-  // Function to add an additional asset selection field
   const handleAddAsset = () => {
     if (visibleFields < 3) {
       setVisibleFields(visibleFields + 1);
     }
   };
 
-  // Function to collapse an asset selection field
   const handleRemoveAsset = () => {
     if (visibleFields > 1) {
       setVisibleFields(visibleFields - 1);
     }
   };
 
-  // Function to simulate the withdrawal estimate
-  const handleEstimateWithdraw = () => {
-    const estimate = radishAmount * 1.2;
-    setEstimatedValueWithdraw(estimate);
+  async function handleEstimateWithdraw(e: any) {
+    e.preventDefault(); // prevent page reload
+    if (radishAmountBack > 0) {
+      const mapCoins = new Map<string, number>([
+        //[XRD_Resource, values.amount1 ?? 0], // XRD
+      ]);
+      const result = await rdt.walletApi.sendTransaction({
+        transactionManifest: generateEstimateLoan(componentAddress, mapCoins),
+      });
+
+      if (result.isErr()) throw result.error;
+
+      const committedDetailsJson = await gatewayApi.transaction.getCommittedDetails(
+        result.value.transactionIntentHash
+      );
+
+      const committedDetails = JSON.parse(JSON.stringify(committedDetailsJson));
+      const events = committedDetails.transaction?.receipt?.events || [];
+
+      const estimateLoanEvent = events.find(
+        (event: any) => event.name === "EstimateLoanEvent"
+      );
+
+      if (estimateLoanEvent) {
+        const data = estimateLoanEvent?.data || [];
+
+        if (Array.isArray(data.fields)) {
+          const valueField = data.fields.find(
+            (field: any) => field.field_name === "value"
+          );
+
+          const loanValue = valueField ? valueField.value : null;
+          console.log("Loan Estimated Value: ", loanValue);
+          setEstimatedValueWithdraw(loanValue);
+        } else {
+          console.error("No fields found in the data");
+        }
+      } else {
+        console.error("EstimateLoanEvent not found");
+      }
+    }
   };
 
   // Function to handle withdrawal
@@ -232,121 +326,124 @@ export default function App() {
   };
 
   if (userHasLoan) {
-    // Render the withdrawal functionality card if the user has a loan
+    // HAS A LOAN
     return (
-      <div style={{ backgroundColor: "#fcfff7", color: "#070707" }}>
-        <Navbar />
-        <main className="p-4">
-          <div className="h-[40rem] flex justify-center items-center px-4">
-            <div className="text-4xl mx-auto font-normal text-neutral-600 dark:text-neutral-400">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Your Loan</CardTitle>
-                  <CardDescription>
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <p style={{
-                    color: "#070707",
-                  }} className="text-lg">
-                    <p className="font-semibold">Debt:</p>
-                    <span className="text-primary ml-6"> {debtValue} Radish</span>
-                  </p>
-                  <p
-                    style={{
+      <div>
+        <div style={{ backgroundColor: "#fcfff7", color: "#070707" }} className="min-h-screen">
+          <Navbar />
+          <main className="p-4">
+            <div className="pt-20 flex justify-center items-center px-4">
+              <div className="text-4xl mx-auto font-normal text-neutral-600 dark:text-neutral-400">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Your Loan</CardTitle>
+                    <CardDescription>
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <p style={{
+                      color: "#070707",
+                    }} className="text-lg">
+                      <p className="font-semibold">Debt:</p>
+                      <span className="text-primary ml-6"> {debtValue} Radish</span>
+                    </p>
+                    <p
+                      style={{
+                        color: "#070707",
+                      }}
+                      className="text-lg font-semibold"
+                    >
+                      Collateral:
+                    </p>
+                    <ul style={{
                       color: "#070707",
                     }}
-                    className="text-lg font-semibold"
-                  >
-                    Collateral:
-                  </p>
-                  <ul style={{
-                      color: "#070707",
-                    }}
-                    className="text-lg list-disc ml-10">
-                    {assetsStats.map((asset, index) => (
-                      <li key={index}>
-                        {asset.amount} {asset.assetName}
-                      </li>
-                    ))}
-                  </ul>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader>
-                  <CardTitle>Withdraw Collateral</CardTitle>
-                  <CardDescription>
-                    Input the amount of Radish you want to deposit, estimate the
-                    amount of each asset that you will get back, and withdraw
-                    the assets.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Form {...form}>
-                    <form className="space-y-8">
-                      <FormItem>
-                        <FormLabel>Radish Amount</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="number"
-                            placeholder="Enter Radish amount"
-                            value={radishAmount}
-                            onChange={(e) =>
-                              setRadishAmount(parseFloat(e.target.value) || 0)
-                            }
-                            className="w-[200px]"
-                          />
-                        </FormControl>
-                      </FormItem>
+                      className="text-lg list-disc ml-10">
+                      {assetsStats.map((asset, index) => (
+                        <li key={index}>
+                          {asset.amount} {asset.assetName}
+                        </li>
+                      ))}
+                    </ul>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Withdraw Collateral</CardTitle>
+                    <CardDescription>
+                      Input the amount of Radish you want to deposit, estimate the
+                      amount of each asset that you will get back, and withdraw
+                      the assets.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <Form {...form}>
+                      <form className="space-y-8">
+                        <FormItem>
+                          <FormLabel>Radish Amount</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              placeholder="Enter Radish amount"
+                              value={radishAmountBack}
+                              onChange={(e) =>
+                                setRadishAmountBack(parseFloat(e.target.value) || 0)
+                              }
+                              className="w-[200px]"
+                            />
+                          </FormControl>
+                        </FormItem>
 
-                      <Button
-                        style={{
-                          backgroundColor: "#fb3640",
-                          color: "#fcfff7",
-                        }}
-                        onClick={handleEstimateWithdraw}
-                      >
-                        Estimate
-                      </Button>
-
-                      {estimatedValueWithdraw > 0 && (
-                        <Card>
-                          <CardContent>
-                            <div className="mt-4 p-4 bg-gray-100 rounded-lg shadow-sm">
-                              <p style={{
-                                color: "#070707",
-                              }} className="text-lg font-semibold">
-                                Estimated Value:
-                                <span className="text-primary font-bold"> {estimatedValueWithdraw} Radish</span>
-                              </p>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      )}
-
-                      <div className="mt-4">
                         <Button
                           style={{
                             backgroundColor: "#fb3640",
                             color: "#fcfff7",
                           }}
-                          onClick={handleWithdraw}
+                          onClick={handleEstimateWithdraw}
                         >
-                          Withdraw
+                          Estimate Collateral
                         </Button>
-                      </div>
-                    </form>
-                  </Form>
-                </CardContent>
-              </Card>
+
+                        {estimatedValueWithdraw > 0 && (
+                          <div className="mt-4 p-4 rounded-lg shadow-sm">
+                            <p style={{
+                              color: "#070707",
+                            }} className="text-lg font-semibold">
+                              Estimated Value:
+                              <span className="text-primary font-bold"> {estimatedValueWithdraw} Radish</span>
+                            </p>
+                            <div className="mt-4">
+                              <Button
+                                type="button"
+                                style={{
+                                  backgroundColor: "#fb3640",
+                                  color: "#fcfff7",
+                                }}
+                                onClick={handleWithdraw}
+                              >
+                                Withdraw
+                              </Button>
+                            </div>
+                          </div>
+                        )}
+                      </form>
+                    </Form>
+                  </CardContent>
+                </Card>
+              </div>
             </div>
+          </main>
+          <div className="absolute inset-0 pointer-events-none z-0">
+            <ShootingStars />
+            <StarsBackground />
           </div>
-        </main>
+        </div>
+        <Footer />
       </div>
     );
   }
 
-  // Render the deposit functionality card if the user doesn't have a loan
+  // NO LOAN
   return (
     <div>
       <div className="flex flex-col min-h-screen" style={{ backgroundColor: "#fcfff7", color: "#070707" }}>
@@ -516,7 +613,6 @@ export default function App() {
                             }}
                           >
                             <PlusIcon className="mr-2" />
-                            Add Asset
                           </Button>
                         )}
 
@@ -530,7 +626,6 @@ export default function App() {
                             }}
                           >
                             <MinusIcon className="mr-2" />
-                            Remove Asset
                           </Button>
                         )}
                       </div>

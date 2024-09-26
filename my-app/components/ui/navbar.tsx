@@ -19,18 +19,10 @@ export default function Navbar() {
                     </div>
 
                     <div className="hidden md:flex items-center space-x-4">
-                        <Link href="/app" style={{ color: '#070707' }} className="hover:text-fb3640">
+                        <Link href="/app" style={{ color: '#070707' }} className="hover:text-[#fb3640] " >
                             App
                         </Link>
                         <div dangerouslySetInnerHTML={{ __html: "<radix-connect-button></radix-connect-button>" }}></div>
-                    </div>
-
-                    <div className="flex md:hidden items-center">
-                        <button
-                            className="text-gray-600 hover:text-gray-900 focus:outline-none focus:text-gray-900"
-                            aria-label="Toggle Menu"
-                        >
-                        </button>
                     </div>
                 </div>
             </div>
