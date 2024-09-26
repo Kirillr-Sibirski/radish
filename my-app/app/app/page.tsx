@@ -44,15 +44,15 @@ import { Footer } from "@/components/ui/footer";
 import CollateralPieChart from "@/components/ui/pie-chart";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 
-const componentAddress = "component_tdx_2_1cz35g4w8nt9498q3lflh7ylzvl0zwwr9kcy2smpkng62vpsvl54drz";
-const nftBadge_Resource = "resource_tdx_2_1nt22ndwmgayafkmdqh8r9mwg0xghrntv4aa3fxuhltrk5snth9vc0f";
+const componentAddress = "component_tdx_2_1cpzmxq2xema0pysqcr40rjt4w5z4pl7j40ymvya4nyjxc28wlrrd7d";
+const nftBadge_Resource = "resource_tdx_2_1ngc2l83rggax8y2rkrpwxj23c0pqyw2n90wqdmpxuv8znvs5twvgcn";
 const dAppDefinitionAddress = "account_tdx_2_12y47w6wsqelpnucy8zjduqdzdq2vq3m56nsudnf73v6yf7h2n237zw";
-const RSH_Resource = "resource_tdx_2_1t49869xvnupdu6vet0j6gftk4lxjq3afegyc54ftm6uz44zx9wrenw";
+const RSH_Resource = "resource_tdx_2_1tknwdst2xtz0p03jf5tfask3j0c444hqlvjfw8esrrh5kravmd09vt";
 
 // Collateral assets - addresses
 const XRD_Resource = "resource_tdx_2_1tknxxxxxxxxxradxrdxxxxxxxxx009923554798xxxxxxxxxtfd2jc";
-const HUG_Resource = "resource__";
-const USDT_Resource = "resource_";
+const HUG_Resource = "resource_tdx_2_1tkuj2rqsa63f8ygkzezgt27trj50srht5e666jaz28j5ss8fasg5kl";
+const USDT_Resource = "resource_tdx_2_1t57e50rm28cyqwn26jn336qyhu8nkt8cknacq8rnsn5kul2l3zvjut";
 
 // Collateral assets - tickets
 const asset1 = "XRD"
@@ -61,8 +61,8 @@ const asset3 = "USDT"
 
 const collateralAssets: Record<string, string> = {
   "resource_tdx_2_1tknxxxxxxxxxradxrdxxxxxxxxx009923554798xxxxxxxxxtfd2jc": asset1, // XRD Resource Address
-  "resource__": asset2,  // Add HUG Resource Address
-  "resource_": asset3, // Add USDT Resource Address
+  "resource_tdx_2_1tkuj2rqsa63f8ygkzezgt27trj50srht5e666jaz28j5ss8fasg5kl": asset2,  // Add HUG Resource Address
+  "resource_tdx_2_1t57e50rm28cyqwn26jn336qyhu8nkt8cknacq8rnsn5kul2l3zvjut": asset3, // Add USDT Resource Address
 };
 
 
