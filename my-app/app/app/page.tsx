@@ -42,6 +42,7 @@ import { generateEstimateLoan, generateEstimateRepay, generateGetLoan } from "..
 import { GatewayApiClient } from "@radixdlt/babylon-gateway-api-sdk";
 import { Footer } from "@/components/ui/footer";
 import CollateralPieChart from "@/components/ui/pie-chart";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 
 const componentAddress = "component_tdx_2_1cz35g4w8nt9498q3lflh7ylzvl0zwwr9kcy2smpkng62vpsvl54drz";
 const nftBadge_Resource = "resource_tdx_2_1nt22ndwmgayafkmdqh8r9mwg0xghrntv4aa3fxuhltrk5snth9vc0f";
@@ -156,7 +157,7 @@ export default function App() {
   const [visibleFields, setVisibleFields] = useState(1); // Control the number of visible asset input fields
   const [radishAmountReturned, setRadishAmountReturned] = useState(0.0);
   const [userHasLoan, setUserHasLoan] = useState(false); // To check if the user has an active loan
-  const [estimatedValueWithdraw, setEstimatedValueWithdraw] = useState(0.0);
+  const [estimatedWithdrawShow, setEstimatedWithdrawShow] = useState(false);
   const [radishAmount, setRadishAmount] = useState(0.0); // Amount of debt when deposit, fuck knows what this shit is for
   const [radishAmountBack, setRadishAmountBack] = useState(0.0); // Estimate withdraw function
   const [debtValue, setDebtValue] = useState(0.0); // Loaded from badge NFT
@@ -171,6 +172,11 @@ export default function App() {
     { amount: 0.0, assetName: "" }
   ]);
 
+  const [estimatedAssetsStats, setEstimatedAssetsStats] = useState<AssetStat[]>([
+    { amount: 0.0, assetName: "" },
+    { amount: 0.0, assetName: "" },
+    { amount: 0.0, assetName: "" }
+  ]);
 
   useEffect(() => {
     const checkBadge = async () => {
@@ -264,6 +270,7 @@ export default function App() {
       result.value.transactionIntentHash
     );
     console.log("Committed: ", committedDetailsJson);
+    
   }
 
 
@@ -298,6 +305,7 @@ export default function App() {
 
       if (result.isErr()) throw result.error;
 
+      console.log("RESUKT: ", result);
       const committedDetailsJson = await gatewayApi.transaction.getCommittedDetails(
         result.value.transactionIntentHash
       );
@@ -311,9 +319,16 @@ export default function App() {
 
       if (estimateLoanEvent) {
         const data = estimateLoanEvent?.data || [];
-        const amountData = data.fields[0].entries[0].value.value;
-        console.log("RESOURCE: ", data.fields[0].entries[0].key.value)
-        //setEstimatedValueWithdraw(data.fields[0].entries[0].value.value)
+        const entries = data.fields[0].entries;
+
+        const updatedAssets = entries.map((entry: any) => ({
+          assetName: collateralAssets[entry.key.value],  // Token name
+          amount: parseFloat(entry.value.value).toFixed(2),  // Token amount
+        }));
+        setEstimatedAssetsStats(updatedAssets);
+        console.log(updatedAssets);
+        setEstimatedWithdrawShow(true);
+
       } else {
         console.error("EstimateRepayEvent not found");
       }
@@ -324,7 +339,6 @@ export default function App() {
     const result = await rdt.walletApi.sendTransaction({
       transactionManifest: "",//generateGetLoan(account.address, componentAddress, radishAmountBack), // !!!!!!!!
     });
-
 
     if (result.isErr()) throw result.error;
 
@@ -410,11 +424,17 @@ export default function App() {
                           Estimate Collateral
                         </Button>
 
-                        {estimatedValueWithdraw > 0 && (
+                        {estimatedWithdrawShow && (
                           <div className="mt-4 p-4 rounded-lg shadow-sm">
-                            <p style={{ color: "#070707" }} className="text-lg font-semibold">
-                              Estimated Value:
-                              <span className="text-primary font-bold"> {estimatedValueWithdraw} Radish</span>
+                            <p style={{ color: "#070707" }} className="text-lg">
+                              <p className="font-semibold">Returned collateral:</p>
+                              <ul style={{ color: "#070707" }} className="text-lg list-disc ml-10">
+                                {estimatedAssetsStats.map((asset, index) => (
+                                  <li key={index}>
+                                    {asset.amount} {asset.assetName}
+                                  </li>
+                                ))}
+                              </ul>
                             </p>
                             <div className="mt-4">
                               <Button
