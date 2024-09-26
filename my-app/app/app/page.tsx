@@ -45,8 +45,18 @@ import { Footer } from "@/components/ui/footer";
 const componentAddress = "component_tdx_2_1cpa35yv2mq98wq3zge7es24ekt8h77svgas9yfulgrh2caslhhc8zn";
 const nftBadge_Resource = "resource_tdx_2_1nfym4crpx56kzvntgc6czk2a539kkp0d4xj25erlsp9zlp2d8u3dj3";
 const dAppDefinitionAddress = "account_tdx_2_12y47w6wsqelpnucy8zjduqdzdq2vq3m56nsudnf73v6yf7h2n237zw";
-const XDR_Resource = "resource_tdx_2_1tknxxxxxxxxxradxrdxxxxxxxxx009923554798xxxxxxxxxtfd2jc";
 const RSH_Resource = "resource_tdx_2_1th63vvjmc6hd7fjrj94zw6h7uqcx9mx6fy57hnsh3z29gdt2kx2um4";
+
+// Collateral assets - addresses
+const XRD_Resource = "resource_tdx_2_1tknxxxxxxxxxradxrdxxxxxxxxx009923554798xxxxxxxxxtfd2jc";
+const HUG_Resource = "";
+const USDT_Resource = "";
+
+// Collateral assets - tickets
+const asset1 = "XRD"
+const asset2 = "HUG"
+const asset3 = "USDT"
+
 
 // Zod schema for validating the form
 const formSchema = z.object({
@@ -63,7 +73,7 @@ const rdt = RadixDappToolkit({
   logger: Logger(1),
 });
 
-let account:any;
+let account: any;
 rdt.walletApi.setRequestData(DataRequestBuilder.accounts().exactly(1));
 // Subscribe to updates to the user's shared wallet data, then display the account name and address.
 rdt.walletApi.walletData$.subscribe(async (walletData) => {
@@ -73,22 +83,24 @@ rdt.walletApi.walletData$.subscribe(async (walletData) => {
   console.log("Account: ", account);
 });
 
-  const gatewayApi = GatewayApiClient.initialize(rdt.gatewayApi.clientConfig);
+const gatewayApi = GatewayApiClient.initialize(rdt.gatewayApi.clientConfig);
 
-  async function hasBadge() {
-    if (!account) return;
-    // Fetch account state from network
-    const accountState = await gatewayApi.state.getEntityDetailsVaultAggregated(
-      account.address
-    );
+async function hasBadge(_account: any) {
+  if (!_account) return;
+  const accountState = await gatewayApi.state.getEntityDetailsVaultAggregated(
+    _account.address
+  );
 
-    // Get the pool unit balance from the account state
-    const getNFTBalance =
-      accountState.non_fungible_resources.items.find(
-        (fr) => fr.resource_address === nftBadge_Resource
-      )?.vaults.items[0] ?? 0;
-    // Update displayed pool unit balance
-    console.log("Has NFT????", getNFTBalance);
+  const getNFTBalance =
+    accountState.non_fungible_resources.items.find(
+      (fr) => fr.resource_address === nftBadge_Resource
+    )?.vaults.items[0] ?? 0;
+  console.log("!!!!!", getNFTBalance)
+  if (getNFTBalance != 0 || getNFTBalance != null) {
+    return true;
+  } else {
+    return false;
+  }
 }
 
 export default function App() {
@@ -112,16 +124,33 @@ export default function App() {
   const [userHasLoan, setUserHasLoan] = useState(false); // To check if the user has an active loan
   const [estimatedValueWithdraw, setEstimatedValueWithdraw] = useState(0);
   const [radishAmount, setRadishAmount] = useState(0); // Amount to deposit
-
+  const [debtValue, setDebtValue] = useState(0);
+  const [assetsStats, setAssetsStats] = useState([
+    { amount: 0.123, assetName: asset1 },
+    { amount: 23, assetName: asset2 },
+    { amount: 23, assetName: asset3 }
+  ]);
 
 
   useEffect(() => {
-    hasBadge();
+    const checkBadge = async () => {
+      if (account) {
+        const hasNFTBadge = await hasBadge(account);
+        console.log("!!!!!", hasNFTBadge)
+        if (hasNFTBadge) {
+          setUserHasLoan(true);
+        } else {
+          setUserHasLoan(false);
+        }
+      }
+    };
+
+    checkBadge();
   }, []);
 
   async function onEstimateLoan(values: z.infer<typeof formSchema>) {
     const mapCoins = new Map<string, number>([
-      [XDR_Resource, values.amount1 ?? 0], // XRD
+      [XRD_Resource, values.amount1 ?? 0], // XRD
     ]);
     const result = await rdt.walletApi.sendTransaction({
       transactionManifest: generateEstimateLoan(componentAddress, mapCoins),
@@ -161,7 +190,7 @@ export default function App() {
 
   async function onDepositAssets(values: z.infer<typeof formSchema>) {
     const mapCoins = new Map<string, number>([
-      [XDR_Resource, values.amount1 ?? 0], // XRD
+      [XRD_Resource, values.amount1 ?? 0], // XRD
     ]);
     const result = await rdt.walletApi.sendTransaction({
       transactionManifest: generateGetLoan(account.address, componentAddress, mapCoins),
@@ -210,6 +239,39 @@ export default function App() {
         <main className="p-4">
           <div className="h-[40rem] flex justify-center items-center px-4">
             <div className="text-4xl mx-auto font-normal text-neutral-600 dark:text-neutral-400">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Your Loan</CardTitle>
+                  <CardDescription>
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <p style={{
+                    color: "#070707",
+                  }} className="text-lg">
+                    <p className="font-semibold">Debt:</p>
+                    <span className="text-primary ml-6"> {debtValue} Radish</span>
+                  </p>
+                  <p
+                    style={{
+                      color: "#070707",
+                    }}
+                    className="text-lg font-semibold"
+                  >
+                    Collateral:
+                  </p>
+                  <ul style={{
+                      color: "#070707",
+                    }}
+                    className="text-lg list-disc ml-10">
+                    {assetsStats.map((asset, index) => (
+                      <li key={index}>
+                        {asset.amount} {asset.assetName}
+                      </li>
+                    ))}
+                  </ul>
+                </CardContent>
+              </Card>
               <Card>
                 <CardHeader>
                   <CardTitle>Withdraw Collateral</CardTitle>
@@ -327,9 +389,9 @@ export default function App() {
                                   <SelectValue placeholder="Select asset" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                  <SelectItem value="XRD">XRD</SelectItem>
-                                  <SelectItem value="RAD">RAD</SelectItem>
-                                  <SelectItem value="HUD">HUD</SelectItem>
+                                  <SelectItem value={asset1}>{asset1}</SelectItem>
+                                  <SelectItem value={asset2}>{asset2}</SelectItem>
+                                  <SelectItem value={asset3}>{asset3}</SelectItem>
                                 </SelectContent>
                               </Select>
                               <FormControl>
@@ -372,9 +434,9 @@ export default function App() {
                                     <SelectValue placeholder="Select asset" />
                                   </SelectTrigger>
                                   <SelectContent>
-                                    <SelectItem value="XRD">XRD</SelectItem>
-                                    <SelectItem value="RAD">RAD</SelectItem>
-                                    <SelectItem value="HUD">HUD</SelectItem>
+                                    <SelectItem value={asset1}>{asset1}</SelectItem>
+                                    <SelectItem value={asset2}>{asset2}</SelectItem>
+                                    <SelectItem value={asset3}>{asset3}</SelectItem>
                                   </SelectContent>
                                 </Select>
                                 <FormControl>
@@ -418,9 +480,9 @@ export default function App() {
                                     <SelectValue placeholder="Select asset" />
                                   </SelectTrigger>
                                   <SelectContent>
-                                    <SelectItem value="XRD">XRD</SelectItem>
-                                    <SelectItem value="RAD">RAD</SelectItem>
-                                    <SelectItem value="HUD">HUD</SelectItem>
+                                    <SelectItem value={asset1}>{asset1}</SelectItem>
+                                    <SelectItem value={asset2}>{asset2}</SelectItem>
+                                    <SelectItem value={asset3}>{asset3}</SelectItem>
                                   </SelectContent>
                                 </Select>
                                 <FormControl>
@@ -505,8 +567,6 @@ export default function App() {
                           </div>
                         </div>
                       )}
-
-
                     </form>
                   </Form>
                 </CardContent>
