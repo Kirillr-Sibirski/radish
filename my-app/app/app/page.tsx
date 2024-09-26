@@ -206,24 +206,20 @@ export default function App() {
   }
 
 
-  // Function to add an additional asset selection field
   const handleAddAsset = () => {
     if (visibleFields < 3) {
       setVisibleFields(visibleFields + 1);
     }
   };
 
-  // Function to collapse an asset selection field
   const handleRemoveAsset = () => {
     if (visibleFields > 1) {
       setVisibleFields(visibleFields - 1);
     }
   };
 
-  // Function to simulate the withdrawal estimate
   const handleEstimateWithdraw = () => {
-    const estimate = radishAmount * 1.2;
-    setEstimatedValueWithdraw(estimate);
+    setEstimatedValueWithdraw(100);
   };
 
   // Function to handle withdrawal
@@ -232,13 +228,13 @@ export default function App() {
   };
 
   if (userHasLoan) {
-    // Render the withdrawal functionality card if the user has a loan
+    // HAS A LOAN
     return (
       <div>
         <div style={{ backgroundColor: "#fcfff7", color: "#070707" }} className="min-h-screen">
           <Navbar />
           <main className="p-4">
-            <div className="h-[40rem] flex justify-center items-center px-4">
+            <div className="pt-20 flex justify-center items-center px-4">
               <div className="text-4xl mx-auto font-normal text-neutral-600 dark:text-neutral-400">
                 <Card>
                   <CardHeader>
@@ -307,13 +303,13 @@ export default function App() {
                           }}
                           onClick={handleEstimateWithdraw}
                         >
-                          Estimate
+                          Estimate Collateral
                         </Button>
 
                         {estimatedValueWithdraw > 0 && (
                           <Card>
                             <CardContent>
-                              <div className="mt-4 p-4 bg-gray-100 rounded-lg shadow-sm">
+                              <div className="mt-4 p-4 rounded-lg shadow-sm">
                                 <p style={{
                                   color: "#070707",
                                 }} className="text-lg font-semibold">
@@ -343,13 +339,17 @@ export default function App() {
               </div>
             </div>
           </main>
+          <div className="absolute inset-0 pointer-events-none z-0">
+            <ShootingStars />
+            <StarsBackground />
+          </div>
         </div>
         <Footer />
       </div>
     );
   }
 
-  // Render the deposit functionality card if the user doesn't have a loan
+  // NO LOAN
   return (
     <div>
       <div className="flex flex-col min-h-screen" style={{ backgroundColor: "#fcfff7", color: "#070707" }}>
@@ -519,7 +519,6 @@ export default function App() {
                             }}
                           >
                             <PlusIcon className="mr-2" />
-                            Add Asset
                           </Button>
                         )}
 
@@ -533,7 +532,6 @@ export default function App() {
                             }}
                           >
                             <MinusIcon className="mr-2" />
-                            Remove Asset
                           </Button>
                         )}
                       </div>
