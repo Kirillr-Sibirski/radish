@@ -114,6 +114,13 @@ export default function App() {
   const [userHasLoan, setUserHasLoan] = useState(false); // To check if the user has an active loan
   const [estimatedValueWithdraw, setEstimatedValueWithdraw] = useState(0);
   const [radishAmount, setRadishAmount] = useState(0); // Amount to deposit
+  const [debtValue, setDebtValue] = useState(0);
+  const [assetsStats, setAssetsStats] = useState([
+    { amount: 0.123, assetName: "XDR" },
+    { amount: 23, assetName: "HUG" },
+    { amount: 23, assetName: "RAD" }
+  ]);
+
 
   useEffect(() => {
     const checkBadge = async () => {
@@ -222,6 +229,39 @@ export default function App() {
         <main className="p-4">
           <div className="h-[40rem] flex justify-center items-center px-4">
             <div className="text-4xl mx-auto font-normal text-neutral-600 dark:text-neutral-400">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Your Loan</CardTitle>
+                  <CardDescription>
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <p style={{
+                    color: "#070707",
+                  }} className="text-lg">
+                    <p className="font-semibold">Debt:</p>
+                    <span className="text-primary ml-6"> {debtValue} Radish</span>
+                  </p>
+                  <p
+                    style={{
+                      color: "#070707",
+                    }}
+                    className="text-lg font-semibold"
+                  >
+                    Collateral:
+                  </p>
+                  <ul style={{
+                      color: "#070707",
+                    }}
+                    className="text-lg list-disc ml-10">
+                    {assetsStats.map((asset, index) => (
+                      <li key={index}>
+                        {asset.amount} {asset.assetName}
+                      </li>
+                    ))}
+                  </ul>
+                </CardContent>
+              </Card>
               <Card>
                 <CardHeader>
                   <CardTitle>Withdraw Collateral</CardTitle>
@@ -517,8 +557,6 @@ export default function App() {
                           </div>
                         </div>
                       )}
-
-
                     </form>
                   </Form>
                 </CardContent>
