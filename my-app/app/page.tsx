@@ -10,7 +10,7 @@ import { Footer } from "@/components/ui/footer";
 export default function Home() {
   const words = ["This is Radish", "Built on Radix"];
   const description =
-    "Radish is an innovative lending platform built on Radix. Diversify your collateral and mint stablecoins for your financial needs.";
+    "Multi-collateralized Lending DApp. Diversify your collateral and mint stablecoins for your financial needs.";
 
   return (
     <div style={{ backgroundColor: "#fcfff7", color: "#070707" }}>
