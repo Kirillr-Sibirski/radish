@@ -7,11 +7,11 @@ CALL_METHOD
   Address("${account}")
   "withdraw"
   Address("${xrd}")
-  Decimal("96");
+  Decimal("1000");
 
 TAKE_FROM_WORKTOP
     Address("${xrd}")
-    Decimal("96")
+    Decimal("1000")
     Bucket("XRD");
 
 CALL_METHOD

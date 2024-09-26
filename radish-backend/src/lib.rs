@@ -3,12 +3,13 @@ use scrypto::prelude::*;
 
 
 /* ------------------- Misc. ------------------ */
-type AddressAmountMap = HashMap<ResourceAddress, Decimal>;
+type AddrToAmount = HashMap<ResourceAddress, Decimal>;
+type LazySet<T> = KeyValueStore<T, ()>;
 
-#[derive(NonFungibleData, ScryptoSbor, Clone)]
+#[derive(Debug, NonFungibleData, ScryptoSbor, Clone)]
 struct Borrower {
     #[mutable]
-    collateral: AddressAmountMap, // Potentially should be replaced with KeyValueStore
+    collateral: AddrToAmount, // Potentially should be replaced with KeyValueStore
     #[mutable]
     debt: Decimal,
 }
@@ -20,7 +21,7 @@ struct EstimateLoanEvent {
 
 #[derive(ScryptoSbor, ScryptoEvent)]
 struct EstimateRepayEvent {
-    released: AddressAmountMap,
+    released: AddrToAmount,
 }
 
 
@@ -36,6 +37,7 @@ mod radish {
             estimate_loan => PUBLIC;
             get_loan => PUBLIC;
             estimate_repay => PUBLIC;
+            repay_loan => PUBLIC;
         }
     }
 
@@ -46,7 +48,7 @@ mod radish {
         radish_vault: Vault,
         // Borrower Resources        
         borrower_manager: ResourceManager,
-        // borrowers: LazySet<NonFungibleGlobalId>,
+        borrowers: LazySet<ComponentAddress>,
         // collateral_addresses: Vec<ResourceAddress>, //! May have to re-enable later
         collateral_vaults: KeyValueStore<ResourceAddress, Vault>,
         // Badges
@@ -102,6 +104,10 @@ mod radish {
                     burner => rule!(require(global_caller(component_address)));
                     burner_updater => rule!(deny_all);
                 })
+                .non_fungible_data_update_roles(non_fungible_data_update_roles!{
+                    non_fungible_data_updater => rule!(require(global_caller(component_address)));
+                    non_fungible_data_updater_updater => rule!(deny_all);
+                })
                 .create_with_no_initial_supply();
 
             let collateral_addresses = vec![XRD];
@@ -126,7 +132,7 @@ mod radish {
                 radish_vault: Vault::with_bucket(radish_bucket),
                 // Borrower Resources
                 borrower_manager,
-                // borrowers: KeyValueStore::new(),
+                borrowers: KeyValueStore::new(),
                 // collateral_addresses,
                 collateral_vaults,
                 // Badges
@@ -148,7 +154,7 @@ mod radish {
         }
 
         // HashMap alright here since max 3-4 K-V pairs passed
-        pub fn estimate_loan(&self, collateral: AddressAmountMap) -> Decimal {
+        pub fn estimate_loan(&self, collateral: AddrToAmount) -> Decimal {
             info!("[estimate_loan] collateral: {:?}", collateral);
 
             /* ---------------- Validation ---------------- */
@@ -183,12 +189,17 @@ mod radish {
             estimated_rsh
         }
 
+        // Prevents user from taking out a second loan
+        // pub fn get_loan(&mut self, account_address: ComponentAddress, collateral: Vec<Bucket>) -> (Bucket, Bucket) {
+            //     assert!(self.borrowers.get(&account_address).is_none(), "Loan already acquired");
+        
         // Vec alright here since max 3-4 values passed
         pub fn get_loan(&mut self, collateral: Vec<Bucket>) -> (Bucket, Bucket) {
             assert!(collateral.len() > 0, "No buckets provided");
+            
             info!("[get_loan] Collateral: {:?} {:?}", &collateral, &collateral[0].amount());
             
-            let resource_map: AddressAmountMap = collateral.iter()
+            let resource_map: AddrToAmount = collateral.iter()
                 .map(|bucket| (bucket.resource_address(), bucket.amount()))
                 .collect();
             let estimated_rsh: Decimal = self.estimate_loan(resource_map.clone());
@@ -209,27 +220,31 @@ mod radish {
             (borrower_badge, self.radish_vault.take(estimated_rsh))
         }
 
-        pub fn estimate_repay(&self, borrower_proof: NonFungibleProof, repayment: Decimal) -> AddressAmountMap {
-            // assert_eq!(borrower_badge.amount(), Decimal::ONE, "Only a single borrower badge must be provided");
-            assert!(repayment > Decimal::ZERO, "Cannot provide negative Radish for repayment");
+        pub fn estimate_repay(&self, borrower_id: NonFungibleLocalId, repayment: Decimal) -> AddrToAmount {
+            // assert_eq!(borrower_proof.amount(), Decimal::ONE, "Only a single borrower badge must be provided");
+            // assert_eq!(borrower_proof.resource_address(), self.borrower_manager.address(), "Invalid borrower badge");
+            assert!(self.borrower_manager.non_fungible_exists(&borrower_id), "Invalid borrower badge id provided");
+            assert!(repayment > Decimal::ZERO, "Cannot provide less than 0 Radish for repayment");
             
-            // let borrower_data: Borrower = borrower_proof.as_non_fungible().non_fungible().data();
-            let borrower_data = borrower_proof
-                .check_with_message(self.borrower_manager.address(), "Invalid borrower badge")
-                .non_fungible::<Borrower>()
-                .data();
+            // let borrower_data = borrower_proof.as_non_fungible().non_fungible::<Borrower>().data();
+            
+            // let borrower_data = borrower_id
+            //     .check_with_message(self.borrower_manager.address(), "Invalid borrower badge")
+            //     .non_fungible::<Borrower>()
+            //     .data();
+
+            let borrower_data = self.borrower_manager.get_non_fungible_data::<Borrower>(&borrower_id);
 
             // If loan fully repaid with potential excess
             if repayment >= borrower_data.debt {
-                let mut estimate = borrower_data.collateral;
-                estimate.insert(self.radish_resource, repayment.checked_sub(borrower_data.debt).unwrap());
+                let estimate = borrower_data.collateral;
 
                 info!("[estimate_repay] Estimated repay with excess: {:?}", &estimate);
                 Runtime::emit_event(EstimateRepayEvent { released: estimate.clone() });
                 estimate
             } else {
                 let repayment_ratio = repayment.checked_div(borrower_data.debt).unwrap();
-                let estimate: AddressAmountMap = borrower_data.collateral.iter()
+                let estimate: AddrToAmount = borrower_data.collateral.iter()
                     .map(|(address, amount)| (*address, amount.checked_mul(repayment_ratio).unwrap()))
                     .collect();
 
@@ -237,6 +252,61 @@ mod radish {
                 Runtime::emit_event(EstimateRepayEvent { released: estimate.clone() });
                 estimate
             }
+        }
+
+        pub fn repay_loan(&mut self, borrower_nft: Bucket, mut repayment: Bucket) -> Vec<Bucket> {
+            assert!(repayment.amount() > Decimal::ZERO, "Cannot provide less than 0 Radish for repayment");
+            assert_eq!(borrower_nft.amount(), Decimal::ONE, "Only a single borrower badge must be provided");
+            assert_eq!(borrower_nft.resource_address(), self.borrower_manager.address(), "Invalid borrower badge");
+            
+            let borrower_data = borrower_nft
+                .as_non_fungible()
+                .non_fungible::<Borrower>()
+                .data();
+            let borrower_id = borrower_nft
+                .as_non_fungible()
+                .non_fungible_local_id();
+            let released_collateral = self.estimate_repay(borrower_id.clone(), repayment.amount());
+            info!("[repay_loan] Releasing collateral: {:?}", &released_collateral);
+            
+            let mut released: Vec<Bucket> = Vec::new();
+            for (address, amount) in released_collateral.clone() {
+                assert!(self.collateral_vaults.get(&address).is_some(), "No collateral vault for resource {:?}", address);
+                assert!(self.collateral_vaults.get(&address).unwrap().amount() >= amount, "Insufficient collateral in vault for resource {:?} to pay out {:?} ({:?} stored)", address, amount, self.collateral_vaults.get(&address).unwrap().amount());
+
+                let bucket = self.collateral_vaults
+                    .get_mut(&address)
+                    .unwrap()
+                    .take(amount);
+                released.push(bucket);
+            }
+
+            if repayment.amount() >= borrower_data.debt {
+                let overflow = repayment.take(repayment.amount().checked_sub(borrower_data.debt).unwrap());
+                info!("Full/overflow repay. overflow: {:?}", &overflow);
+                released.push(overflow);     
+
+                borrower_nft.burn();
+            } else {
+                info!("Partial repay pre {:?}", &borrower_data);
+
+                let new_collateral: AddrToAmount = borrower_data.collateral.iter()
+                    .map(|(&address, &amount)| (
+                        address, 
+                        amount.checked_sub(*released_collateral.get(&address).unwrap()).unwrap()
+                    ))
+                    .collect();
+                let new_debt = borrower_data.debt.checked_sub(repayment.amount()).unwrap();
+
+                self.borrower_manager.update_non_fungible_data(&borrower_id, "collateral", new_collateral);
+                self.borrower_manager.update_non_fungible_data(&borrower_id, "debt", new_debt);
+
+                info!("Partial repay post {:?}", &borrower_data);
+                released.push(borrower_nft);
+            }
+
+            self.radish_vault.put(repayment);
+            released
         }
     }
 }
