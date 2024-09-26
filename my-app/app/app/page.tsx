@@ -123,7 +123,8 @@ export default function App() {
   const [radishAmountReturned, setRadishAmountReturned] = useState(0);
   const [userHasLoan, setUserHasLoan] = useState(false); // To check if the user has an active loan
   const [estimatedValueWithdraw, setEstimatedValueWithdraw] = useState(0);
-  const [radishAmount, setRadishAmount] = useState(0); // Amount to deposit
+  const [radishAmount, setRadishAmount] = useState(0); // Amount of debt when deposit
+  const [radishAmountBack, setRadishAmountBack] = useState(0);
   const [debtValue, setDebtValue] = useState(0);
   const [assetsStats, setAssetsStats] = useState([
     { amount: 0.123, assetName: asset1 },
@@ -218,8 +219,47 @@ export default function App() {
     }
   };
 
-  const handleEstimateWithdraw = () => {
-    setEstimatedValueWithdraw(100);
+  async function handleEstimateWithdraw(e: any) {
+    e.preventDefault(); // prevent page reload
+    if(radishAmountBack > 0) {
+      const mapCoins = new Map<string, number>([
+        //[XRD_Resource, values.amount1 ?? 0], // XRD
+      ]);
+      const result = await rdt.walletApi.sendTransaction({
+        transactionManifest: generateEstimateLoan(componentAddress, mapCoins),
+      });
+  
+      if (result.isErr()) throw result.error;
+  
+      const committedDetailsJson = await gatewayApi.transaction.getCommittedDetails(
+        result.value.transactionIntentHash
+      );
+  
+      const committedDetails = JSON.parse(JSON.stringify(committedDetailsJson));
+      const events = committedDetails.transaction?.receipt?.events || [];
+  
+      const estimateLoanEvent = events.find(
+        (event: any) => event.name === "EstimateLoanEvent"
+      );
+  
+      if (estimateLoanEvent) {
+        const data = estimateLoanEvent?.data || [];
+  
+        if (Array.isArray(data.fields)) {
+          const valueField = data.fields.find(
+            (field: any) => field.field_name === "value"
+          );
+  
+          const loanValue = valueField ? valueField.value : null;
+          console.log("Loan Estimated Value: ", loanValue);
+          setEstimatedValueWithdraw(loanValue);
+        } else {
+          console.error("No fields found in the data");
+        }
+      } else {
+        console.error("EstimateLoanEvent not found");
+      }
+    }
   };
 
   // Function to handle withdrawal
@@ -287,9 +327,9 @@ export default function App() {
                             <Input
                               type="number"
                               placeholder="Enter Radish amount"
-                              value={radishAmount}
+                              value={radishAmountBack}
                               onChange={(e) =>
-                                setRadishAmount(parseFloat(e.target.value) || 0)
+                                setRadishAmountBack(parseFloat(e.target.value) || 0)
                               }
                               className="w-[200px]"
                             />
