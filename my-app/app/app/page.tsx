@@ -159,6 +159,7 @@ export default function App() {
   const [radishAmount, setRadishAmount] = useState(0); // Amount of debt when deposit, fuck knows what this shit is for
   const [radishAmountBack, setRadishAmountBack] = useState(0); // Estimate withdraw function
   const [debtValue, setDebtValue] = useState(0); // Loaded from badge NFT
+  const [interestRate, setInterestRate] = useState(10); // Dummy interest rate
   interface AssetStat {
     amount: number;
     assetName: string;
@@ -371,6 +372,12 @@ export default function App() {
                         </li>
                       ))}
                     </ul>
+                    <p style={{
+                      color: "#070707",
+                    }} className="text-lg">
+                      <p className="font-semibold">Interest Rate:</p>
+                      <span className="text-primary ml-6"> {interestRate}%</span>
+                    </p>
                   </CardContent>
                 </Card>
                 <Card>
