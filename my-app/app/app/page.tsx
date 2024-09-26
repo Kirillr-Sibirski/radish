@@ -114,9 +114,9 @@ export default function App() {
   });
 
   const [selectedAssets, setSelectedAssets] = useState({
-    field1: "XRD",
-    field2: "RAD",
-    field3: "HUD",
+    field1: `${asset1}`,
+    field2: `${asset2}`,
+    field3: `${asset3}`,
   });
 
   const [visibleFields, setVisibleFields] = useState(1); // Control the number of visible asset input fields
@@ -234,114 +234,117 @@ export default function App() {
   if (userHasLoan) {
     // Render the withdrawal functionality card if the user has a loan
     return (
-      <div style={{ backgroundColor: "#fcfff7", color: "#070707" }}>
-        <Navbar />
-        <main className="p-4">
-          <div className="h-[40rem] flex justify-center items-center px-4">
-            <div className="text-4xl mx-auto font-normal text-neutral-600 dark:text-neutral-400">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Your Loan</CardTitle>
-                  <CardDescription>
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <p style={{
-                    color: "#070707",
-                  }} className="text-lg">
-                    <p className="font-semibold">Debt:</p>
-                    <span className="text-primary ml-6"> {debtValue} Radish</span>
-                  </p>
-                  <p
-                    style={{
+      <div>
+        <div style={{ backgroundColor: "#fcfff7", color: "#070707" }} className="min-h-screen">
+          <Navbar />
+          <main className="p-4">
+            <div className="h-[40rem] flex justify-center items-center px-4">
+              <div className="text-4xl mx-auto font-normal text-neutral-600 dark:text-neutral-400">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Your Loan</CardTitle>
+                    <CardDescription>
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <p style={{
+                      color: "#070707",
+                    }} className="text-lg">
+                      <p className="font-semibold">Debt:</p>
+                      <span className="text-primary ml-6"> {debtValue} Radish</span>
+                    </p>
+                    <p
+                      style={{
+                        color: "#070707",
+                      }}
+                      className="text-lg font-semibold"
+                    >
+                      Collateral:
+                    </p>
+                    <ul style={{
                       color: "#070707",
                     }}
-                    className="text-lg font-semibold"
-                  >
-                    Collateral:
-                  </p>
-                  <ul style={{
-                      color: "#070707",
-                    }}
-                    className="text-lg list-disc ml-10">
-                    {assetsStats.map((asset, index) => (
-                      <li key={index}>
-                        {asset.amount} {asset.assetName}
-                      </li>
-                    ))}
-                  </ul>
-                </CardContent>
-              </Card>
-              <Card>
-                <CardHeader>
-                  <CardTitle>Withdraw Collateral</CardTitle>
-                  <CardDescription>
-                    Input the amount of Radish you want to deposit, estimate the
-                    amount of each asset that you will get back, and withdraw
-                    the assets.
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <Form {...form}>
-                    <form className="space-y-8">
-                      <FormItem>
-                        <FormLabel>Radish Amount</FormLabel>
-                        <FormControl>
-                          <Input
-                            type="number"
-                            placeholder="Enter Radish amount"
-                            value={radishAmount}
-                            onChange={(e) =>
-                              setRadishAmount(parseFloat(e.target.value) || 0)
-                            }
-                            className="w-[200px]"
-                          />
-                        </FormControl>
-                      </FormItem>
+                      className="text-lg list-disc ml-10">
+                      {assetsStats.map((asset, index) => (
+                        <li key={index}>
+                          {asset.amount} {asset.assetName}
+                        </li>
+                      ))}
+                    </ul>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Withdraw Collateral</CardTitle>
+                    <CardDescription>
+                      Input the amount of Radish you want to deposit, estimate the
+                      amount of each asset that you will get back, and withdraw
+                      the assets.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <Form {...form}>
+                      <form className="space-y-8">
+                        <FormItem>
+                          <FormLabel>Radish Amount</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              placeholder="Enter Radish amount"
+                              value={radishAmount}
+                              onChange={(e) =>
+                                setRadishAmount(parseFloat(e.target.value) || 0)
+                              }
+                              className="w-[200px]"
+                            />
+                          </FormControl>
+                        </FormItem>
 
-                      <Button
-                        style={{
-                          backgroundColor: "#fb3640",
-                          color: "#fcfff7",
-                        }}
-                        onClick={handleEstimateWithdraw}
-                      >
-                        Estimate
-                      </Button>
-
-                      {estimatedValueWithdraw > 0 && (
-                        <Card>
-                          <CardContent>
-                            <div className="mt-4 p-4 bg-gray-100 rounded-lg shadow-sm">
-                              <p style={{
-                                color: "#070707",
-                              }} className="text-lg font-semibold">
-                                Estimated Value:
-                                <span className="text-primary font-bold"> {estimatedValueWithdraw} Radish</span>
-                              </p>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      )}
-
-                      <div className="mt-4">
                         <Button
                           style={{
                             backgroundColor: "#fb3640",
                             color: "#fcfff7",
                           }}
-                          onClick={handleWithdraw}
+                          onClick={handleEstimateWithdraw}
                         >
-                          Withdraw
+                          Estimate
                         </Button>
-                      </div>
-                    </form>
-                  </Form>
-                </CardContent>
-              </Card>
+
+                        {estimatedValueWithdraw > 0 && (
+                          <Card>
+                            <CardContent>
+                              <div className="mt-4 p-4 bg-gray-100 rounded-lg shadow-sm">
+                                <p style={{
+                                  color: "#070707",
+                                }} className="text-lg font-semibold">
+                                  Estimated Value:
+                                  <span className="text-primary font-bold"> {estimatedValueWithdraw} Radish</span>
+                                </p>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        )}
+
+                        <div className="mt-4">
+                          <Button
+                            style={{
+                              backgroundColor: "#fb3640",
+                              color: "#fcfff7",
+                            }}
+                            onClick={handleWithdraw}
+                          >
+                            Withdraw
+                          </Button>
+                        </div>
+                      </form>
+                    </Form>
+                  </CardContent>
+                </Card>
+              </div>
             </div>
-          </div>
-        </main>
+          </main>
+        </div>
+        <Footer />
       </div>
     );
   }
