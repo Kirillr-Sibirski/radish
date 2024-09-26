@@ -42,6 +42,7 @@ import { generateEstimateLoan, generateEstimateRepay, generateGetLoan } from "..
 import { GatewayApiClient } from "@radixdlt/babylon-gateway-api-sdk";
 import { Footer } from "@/components/ui/footer";
 import CollateralPieChart from "@/components/ui/pie-chart";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 
 const componentAddress = "component_tdx_2_1cz35g4w8nt9498q3lflh7ylzvl0zwwr9kcy2smpkng62vpsvl54drz";
 const nftBadge_Resource = "resource_tdx_2_1nt22ndwmgayafkmdqh8r9mwg0xghrntv4aa3fxuhltrk5snth9vc0f";
@@ -269,6 +270,7 @@ export default function App() {
       result.value.transactionIntentHash
     );
     console.log("Committed: ", committedDetailsJson);
+    
   }
 
 
@@ -303,6 +305,7 @@ export default function App() {
 
       if (result.isErr()) throw result.error;
 
+      console.log("RESUKT: ", result);
       const committedDetailsJson = await gatewayApi.transaction.getCommittedDetails(
         result.value.transactionIntentHash
       );
@@ -336,7 +339,6 @@ export default function App() {
     const result = await rdt.walletApi.sendTransaction({
       transactionManifest: "",//generateGetLoan(account.address, componentAddress, radishAmountBack), // !!!!!!!!
     });
-
 
     if (result.isErr()) throw result.error;
 
