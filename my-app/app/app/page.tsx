@@ -38,16 +38,16 @@ import {
   RadixNetwork,
   Logger,
 } from "@radixdlt/radix-dapp-toolkit";
-import { generateEstimateLoan, generateEstimateRepay, generateGetLoan } from "../manifests";
+import { generateEstimateLoan, generateEstimateRepay, generateGetLoan, generateRepayLoan } from "../manifests";
 import { GatewayApiClient } from "@radixdlt/babylon-gateway-api-sdk";
 import { Footer } from "@/components/ui/footer";
 import CollateralPieChart from "@/components/ui/pie-chart";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 
-const componentAddress = "component_tdx_2_1cpzmxq2xema0pysqcr40rjt4w5z4pl7j40ymvya4nyjxc28wlrrd7d";
-const nftBadge_Resource = "resource_tdx_2_1ngc2l83rggax8y2rkrpwxj23c0pqyw2n90wqdmpxuv8znvs5twvgcn";
+const componentAddress = "component_tdx_2_1cz9n0nywtp7qxwsa8zf6y5faaqr5fa26j6ltzkvdmedhz9l343e2xs";
+const nftBadge_Resource = "resource_tdx_2_1nf3f2ydcsmm7xarkwx48mnwhgu0nejr0s0967s996vx2u4zqrhlqy4";
 const dAppDefinitionAddress = "account_tdx_2_12y47w6wsqelpnucy8zjduqdzdq2vq3m56nsudnf73v6yf7h2n237zw";
-const RSH_Resource = "resource_tdx_2_1tknwdst2xtz0p03jf5tfask3j0c444hqlvjfw8esrrh5kravmd09vt";
+const RSH_Resource = "resource_tdx_2_1t57pm7udgs9cj70s938xznx9erklqm0sn60w6ykfmu6d2t3scltv87";
 
 // Collateral assets - addresses
 const XRD_Resource = "resource_tdx_2_1tknxxxxxxxxxradxrdxxxxxxxxx009923554798xxxxxxxxxtfd2jc";
@@ -178,6 +178,14 @@ export default function App() {
     { amount: 0.0, assetName: "" }
   ]);
 
+  type AssetName = 'XRD' | 'USDT' | 'HUG';
+
+  const tokenPrices: Record<AssetName, number> = {
+    XRD: 0.02126,  // Price of XRD in some base value
+    USDT: 1.0,     // Price of USDT (stablecoin, so it's 1.0)
+    HUG: 0.0000109 // Price of HUG in some base value
+  };
+
   useEffect(() => {
     const checkBadge = async () => {
       if (account) {
@@ -216,6 +224,8 @@ export default function App() {
   async function onEstimateLoan(values: z.infer<typeof formSchema>) {
     const mapCoins = new Map<string, number>([
       [XRD_Resource, values.amount1 ?? 0], // XRD
+      [HUG_Resource, values.amount2 ?? 0],
+      [USDT_Resource, values.amount3 ?? 0],
     ]);
     const result = await rdt.walletApi.sendTransaction({
       transactionManifest: generateEstimateLoan(componentAddress, mapCoins),
@@ -256,6 +266,8 @@ export default function App() {
   async function onDepositAssets(values: z.infer<typeof formSchema>) {
     const mapCoins = new Map<string, number>([
       [XRD_Resource, values.amount1 ?? 0], // XRD
+      [HUG_Resource, values.amount2 ?? 0],
+      [USDT_Resource, values.amount3 ?? 0],
     ]);
     const result = await rdt.walletApi.sendTransaction({
       transactionManifest: generateGetLoan(account.address, componentAddress, mapCoins),
@@ -298,7 +310,7 @@ export default function App() {
       const nftItem = nftID?.items?.length ? nftID.items[0] : ''; // Fallback to an empty string
 
       const result = await rdt.walletApi.sendTransaction({
-        transactionManifest: generateEstimateRepay(account.address, componentAddress, nftBadge_Resource, nftItem, radishAmountBack), //generateEstimateLoan(componentAddress, radishAmountBack),   // !!!!!!!!
+        transactionManifest: generateEstimateRepay(account.address, componentAddress, nftItem, radishAmountBack), //generateEstimateLoan(componentAddress, radishAmountBack),   // !!!!!!!!
       });
 
       if (result.isErr()) throw result.error;
@@ -334,10 +346,26 @@ export default function App() {
   };
 
   async function handleWithdraw() {
-    const result = await rdt.walletApi.sendTransaction({
-      transactionManifest: "",//generateGetLoan(account.address, componentAddress, radishAmountBack), // !!!!!!!!
-    });
+    const accountState = await gatewayApi.state.getEntityDetailsVaultAggregated(
+      account.address
+    );
 
+    const nftID = accountState.non_fungible_resources.items.find(
+      (fr) => fr.resource_address === nftBadge_Resource
+    )?.vaults.items[0];
+
+    if (!nftID) {
+      console.error("NFT ID is undefined. Cannot proceed with the transaction.");
+      // Optionally, you can display an alert or a message to the user here.
+      return; // Exit the function early to prevent calling the transaction
+    }
+
+    const nftItem = nftID?.items?.length ? nftID.items[0] : ''; // Fallback to an empty string
+
+    const result = await rdt.walletApi.sendTransaction({
+      transactionManifest: generateRepayLoan(account.address, componentAddress, nftBadge_Resource, nftItem, RSH_Resource, radishAmountBack),
+    });
+    console.log("RESULT: ", result);
     if (result.isErr()) throw result.error;
 
     const committedDetailsJson = await gatewayApi.transaction.getCommittedDetails(
@@ -346,6 +374,25 @@ export default function App() {
     console.log("Committed: ", committedDetailsJson);
     alert("Loan successfully repaid.")
   }
+
+  // const convertToProportion = (assetsStats: AssetStat[]): AssetStat[] => {
+  //   // Calculate the total value in the base token (XRD or USDT equivalent)
+  //   const totalValue = assetsStats.reduce((sum, asset) => {
+  //     const price = tokenPrices[asset.assetName];  // TypeScript knows assetName is a valid key in tokenPrices
+  //     return sum + (asset.amount * price);
+  //   }, 0);
+  
+  //   // Convert each asset's amount into a proportion based on its value relative to the total
+  //   return assetsStats.map((asset) => {
+  //     const price = tokenPrices[asset.assetName];  // Again, assetName is validated by TypeScript
+  //     const value = asset.amount * price;
+  //     const proportion = (value / totalValue) * 100;  // Proportion in percentage
+  //     return { ...asset, amount: parseFloat(proportion.toFixed(2)) };  // Update the amount to proportion and fix to 2 decimals
+  //   });
+  // }
+
+  // Usage before passing into the PieChart
+  // const proportionateAssetsStats = convertToProportion(assetsStats);
 
   if (userHasLoan) {
     // HAS A LOAN
