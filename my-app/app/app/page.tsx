@@ -151,7 +151,7 @@ export default function App() {
     field3: `${asset3}`,
   });
 
-  
+
   const [visibleFields, setVisibleFields] = useState(1); // Control the number of visible asset input fields
   const [radishAmountReturned, setRadishAmountReturned] = useState(0);
   const [userHasLoan, setUserHasLoan] = useState(false); // To check if the user has an active loan
@@ -405,31 +405,27 @@ export default function App() {
                         </Button>
 
                         {estimatedValueWithdraw > 0 && (
-                          <Card>
-                            <CardContent>
-                              <div className="mt-4 p-4 rounded-lg shadow-sm">
-                                <p style={{
-                                  color: "#070707",
-                                }} className="text-lg font-semibold">
-                                  Estimated Value:
-                                  <span className="text-primary font-bold"> {estimatedValueWithdraw} Radish</span>
-                                </p>
-                              </div>
-                            </CardContent>
-                          </Card>
+                          <div className="mt-4 p-4 rounded-lg shadow-sm">
+                            <p style={{
+                              color: "#070707",
+                            }} className="text-lg font-semibold">
+                              Estimated Value:
+                              <span className="text-primary font-bold"> {estimatedValueWithdraw} Radish</span>
+                            </p>
+                            <div className="mt-4">
+                              <Button
+                                type="button"
+                                style={{
+                                  backgroundColor: "#fb3640",
+                                  color: "#fcfff7",
+                                }}
+                                onClick={handleWithdraw}
+                              >
+                                Withdraw
+                              </Button>
+                            </div>
+                          </div>
                         )}
-
-                        <div className="mt-4">
-                          <Button
-                            style={{
-                              backgroundColor: "#fb3640",
-                              color: "#fcfff7",
-                            }}
-                            onClick={handleWithdraw}
-                          >
-                            Withdraw
-                          </Button>
-                        </div>
                       </form>
                     </Form>
                   </CardContent>
