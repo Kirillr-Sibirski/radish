@@ -58,7 +58,7 @@ export function generateEstimateRepay(
   component_address: string,
   borrower_badge_address: string,
   borrower_badge_id: string,
-  repay_amount: number,
+  repay_amount: number
 ) {
   return `CALL_METHOD
     Address("${account_address}")
@@ -79,4 +79,48 @@ export function generateEstimateRepay(
     Address("${account_address}")
     "deposit_batch"
     Expression("ENTIRE_WORKTOP");`;
+}
+
+export function generateRepayLoan(
+  account_address:   string,
+  component_address: string,
+  borrower_badge:    string,
+  borrower_badge_id: string,
+  rsh_address:       string,
+  rsh_amount:        number
+) {
+  return `
+  CALL_METHOD 
+    Address("${account_address}") 
+    "withdraw"
+    Address("${rsh_address}") 
+    Decimal("${rsh_amount}");
+
+  CALL_METHOD 
+    Address("${account_address}") 
+    "withdraw_non_fungibles" 
+    Address("${borrower_badge}") 
+    Array<NonFungibleLocalId>(NonFungibleLocalId("${borrower_badge_id}"));
+
+  TAKE_FROM_WORKTOP 
+    Address("${rsh_address}")
+    Decimal("${rsh_amount}")
+    Bucket("RSH");
+
+  TAKE_NON_FUNGIBLES_FROM_WORKTOP
+    Address("${borrower_badge}")
+    Array<NonFungibleLocalId>(NonFungibleLocalId("${borrower_badge_id}"))
+    Bucket("NFT");
+
+  CALL_METHOD
+    Address("${component_address}")
+    "repay_loan"
+    Bucket("NFT")
+    Bucket("RSH");
+
+  CALL_METHOD
+    Address("${account_address}")
+    "deposit_batch"
+    Expression("ENTIRE_WORKTOP");
+  `;
 }
