@@ -58,7 +58,7 @@ mod radish {
     }
 
     impl Radish {
-        pub fn instantise_radish() -> (Global<Radish>, Bucket) {
+        pub fn instantise_radish(USDT: ResourceAddress, HUG: ResourceAddress) -> (Global<Radish>, Bucket) {
             let (address_reservation, component_address) =
                 Runtime::allocate_component_address(Radish::blueprint_id());
 
@@ -110,7 +110,7 @@ mod radish {
                 })
                 .create_with_no_initial_supply();
 
-            let collateral_addresses = vec![XRD];
+            let collateral_addresses = vec![XRD, USDT, HUG];
             let collateral_vaults = KeyValueStore::new();
             
             for address in &collateral_addresses {
@@ -121,7 +121,10 @@ mod radish {
             /* ------------ Placeholder Oracle ------------ */
             let placeholder_oracle_collateral_prices = KeyValueStore::new();
             placeholder_oracle_collateral_prices.insert(radish_bucket.resource_address(), dec!(2.0));
-            placeholder_oracle_collateral_prices.insert(XRD, dec!(0.02099)); // OCISWAP 
+            // Price data from OCISWAP at the time of writing
+            placeholder_oracle_collateral_prices.insert(XRD, dec!(0.02126));  
+            placeholder_oracle_collateral_prices.insert(USDT,dec!(1.0));      
+            placeholder_oracle_collateral_prices.insert(HUG, dec!(0.0000109));
 
 
             /* --------------- Instantising --------------- */
