@@ -41,6 +41,7 @@ import {
 import { generateEstimateLoan, generateGetLoan } from "../manifests";
 import { GatewayApiClient } from "@radixdlt/babylon-gateway-api-sdk";
 import { Footer } from "@/components/ui/footer";
+import CollateralPieChart from "@/components/ui/pie-chart";
 
 const componentAddress = "component_tdx_2_1cpa35yv2mq98wq3zge7es24ekt8h77svgas9yfulgrh2caslhhc8zn";
 const nftBadge_Resource = "resource_tdx_2_1nfym4crpx56kzvntgc6czk2a539kkp0d4xj25erlsp9zlp2d8u3dj3";
@@ -281,7 +282,7 @@ export default function App() {
   async function handleEstimateWithdraw(e: any) {
     e.preventDefault(); // prevent page reload
     if (radishAmountBack > 0) {
-      const result = await rdt.walletApi.sendTransaction({ 
+      const result = await rdt.walletApi.sendTransaction({
         transactionManifest: "", //generateEstimateLoan(componentAddress, radishAmountBack),   // !!!!!!!!
       });
 
@@ -344,49 +345,43 @@ export default function App() {
                 <Card>
                   <CardHeader>
                     <CardTitle>Your Loan</CardTitle>
-                    <CardDescription>
-                    </CardDescription>
+                    <CardDescription></CardDescription>
                   </CardHeader>
                   <CardContent>
-                    <p style={{
-                      color: "#070707",
-                    }} className="text-lg">
-                      <p className="font-semibold">Debt:</p>
-                      <span className="text-primary ml-6"> {debtValue} Radish</span>
-                    </p>
-                    <p
-                      style={{
-                        color: "#070707",
-                      }}
-                      className="text-lg font-semibold"
-                    >
-                      Collateral:
-                    </p>
-                    <ul style={{
-                      color: "#070707",
-                    }}
-                      className="text-lg list-disc ml-10">
-                      {assetsStats.map((asset, index) => (
-                        <li key={index}>
-                          {asset.amount} {asset.assetName}
-                        </li>
-                      ))}
-                    </ul>
-                    <p style={{
-                      color: "#070707",
-                    }} className="text-lg">
-                      <p className="font-semibold">Interest Rate:</p>
-                      <span className="text-primary ml-6"> {interestRate}%</span>
-                    </p>
+                    <div className="flex"> {/* Flex container to position text and chart side by side */}
+                      {/* Left side: Text content */}
+                      <div className="flex-1"> {/* This makes the text take available space */}
+                        <p style={{ color: "#070707" }} className="text-lg">
+                          <p className="font-semibold">Debt:</p>
+                          <span className="text-primary ml-6">{debtValue} Radish</span>
+                        </p>
+                        <p style={{ color: "#070707" }} className="text-lg font-semibold">Collateral:</p>
+                        <ul style={{ color: "#070707" }} className="text-lg list-disc ml-10">
+                          {assetsStats.map((asset, index) => (
+                            <li key={index}>
+                              {asset.amount} {asset.assetName}
+                            </li>
+                          ))}
+                        </ul>
+                        <p style={{ color: "#070707" }} className="text-lg">
+                          <p className="font-semibold">Interest Rate:</p>
+                          <span className="text-primary ml-6">{interestRate}%</span>
+                        </p>
+                      </div>
+
+                      {/* Right side: Pie chart */}
+                      <div className="flex-shrink-0 ml-10"> {/* This keeps the pie chart to the right */}
+                        <CollateralPieChart assetsStats={assetsStats} />
+                      </div>
+                    </div>
                   </CardContent>
                 </Card>
-                <Card>
+
+                <Card className="mt-8">
                   <CardHeader>
                     <CardTitle>Withdraw Collateral</CardTitle>
                     <CardDescription>
-                      Input the amount of Radish you want to deposit, estimate the
-                      amount of each asset that you will get back, and withdraw
-                      the assets.
+                      Input the amount of Radish you want to deposit, estimate the amount of each asset that you will get back, and withdraw the assets.
                     </CardDescription>
                   </CardHeader>
                   <CardContent>
@@ -399,19 +394,14 @@ export default function App() {
                               type="number"
                               placeholder="Enter Radish amount"
                               value={radishAmountBack}
-                              onChange={(e) =>
-                                setRadishAmountBack(parseFloat(e.target.value) || 0)
-                              }
+                              onChange={(e) => setRadishAmountBack(parseFloat(e.target.value) || 0)}
                               className="w-[200px]"
                             />
                           </FormControl>
                         </FormItem>
 
                         <Button
-                          style={{
-                            backgroundColor: "#fb3640",
-                            color: "#fcfff7",
-                          }}
+                          style={{ backgroundColor: "#fb3640", color: "#fcfff7" }}
                           onClick={handleEstimateWithdraw}
                         >
                           Estimate Collateral
@@ -419,19 +409,14 @@ export default function App() {
 
                         {estimatedValueWithdraw > 0 && (
                           <div className="mt-4 p-4 rounded-lg shadow-sm">
-                            <p style={{
-                              color: "#070707",
-                            }} className="text-lg font-semibold">
+                            <p style={{ color: "#070707" }} className="text-lg font-semibold">
                               Estimated Value:
                               <span className="text-primary font-bold"> {estimatedValueWithdraw} Radish</span>
                             </p>
                             <div className="mt-4">
                               <Button
                                 type="button"
-                                style={{
-                                  backgroundColor: "#fb3640",
-                                  color: "#fcfff7",
-                                }}
+                                style={{ backgroundColor: "#fb3640", color: "#fcfff7" }}
                                 onClick={handleWithdraw}
                               >
                                 Withdraw
@@ -453,6 +438,7 @@ export default function App() {
         </div>
         <Footer />
       </div>
+
     );
   }
 
