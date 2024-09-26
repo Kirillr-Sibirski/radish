@@ -45,8 +45,18 @@ import { Footer } from "@/components/ui/footer";
 const componentAddress = "component_tdx_2_1cpa35yv2mq98wq3zge7es24ekt8h77svgas9yfulgrh2caslhhc8zn";
 const nftBadge_Resource = "resource_tdx_2_1nfym4crpx56kzvntgc6czk2a539kkp0d4xj25erlsp9zlp2d8u3dj3";
 const dAppDefinitionAddress = "account_tdx_2_12y47w6wsqelpnucy8zjduqdzdq2vq3m56nsudnf73v6yf7h2n237zw";
-const XDR_Resource = "resource_tdx_2_1tknxxxxxxxxxradxrdxxxxxxxxx009923554798xxxxxxxxxtfd2jc";
 const RSH_Resource = "resource_tdx_2_1th63vvjmc6hd7fjrj94zw6h7uqcx9mx6fy57hnsh3z29gdt2kx2um4";
+
+// Collateral assets - addresses
+const XDR_Resource = "resource_tdx_2_1tknxxxxxxxxxradxrdxxxxxxxxx009923554798xxxxxxxxxtfd2jc";
+const HUG_Resource = "";
+const USDT_Resource = "";
+
+// Collateral assets - tickets
+const asset1 = "XDR"
+const asset2 = "HUG"
+const asset3 = "USDT"
+
 
 // Zod schema for validating the form
 const formSchema = z.object({
@@ -116,9 +126,9 @@ export default function App() {
   const [radishAmount, setRadishAmount] = useState(0); // Amount to deposit
   const [debtValue, setDebtValue] = useState(0);
   const [assetsStats, setAssetsStats] = useState([
-    { amount: 0.123, assetName: "XDR" },
-    { amount: 23, assetName: "HUG" },
-    { amount: 23, assetName: "RAD" }
+    { amount: 0.123, assetName: asset1 },
+    { amount: 23, assetName: asset2 },
+    { amount: 23, assetName: asset3 }
   ]);
 
 
@@ -379,9 +389,9 @@ export default function App() {
                                   <SelectValue placeholder="Select asset" />
                                 </SelectTrigger>
                                 <SelectContent>
-                                  <SelectItem value="XRD">XRD</SelectItem>
-                                  <SelectItem value="RAD">RAD</SelectItem>
-                                  <SelectItem value="HUD">HUD</SelectItem>
+                                  <SelectItem value={asset1}>{asset1}</SelectItem>
+                                  <SelectItem value={asset2}>{asset2}</SelectItem>
+                                  <SelectItem value={asset3}>{asset3}</SelectItem>
                                 </SelectContent>
                               </Select>
                               <FormControl>
@@ -424,9 +434,9 @@ export default function App() {
                                     <SelectValue placeholder="Select asset" />
                                   </SelectTrigger>
                                   <SelectContent>
-                                    <SelectItem value="XRD">XRD</SelectItem>
-                                    <SelectItem value="RAD">RAD</SelectItem>
-                                    <SelectItem value="HUD">HUD</SelectItem>
+                                    <SelectItem value={asset1}>{asset1}</SelectItem>
+                                    <SelectItem value={asset2}>{asset2}</SelectItem>
+                                    <SelectItem value={asset3}>{asset3}</SelectItem>
                                   </SelectContent>
                                 </Select>
                                 <FormControl>
@@ -470,9 +480,9 @@ export default function App() {
                                     <SelectValue placeholder="Select asset" />
                                   </SelectTrigger>
                                   <SelectContent>
-                                    <SelectItem value="XRD">XRD</SelectItem>
-                                    <SelectItem value="RAD">RAD</SelectItem>
-                                    <SelectItem value="HUD">HUD</SelectItem>
+                                    <SelectItem value={asset1}>{asset1}</SelectItem>
+                                    <SelectItem value={asset2}>{asset2}</SelectItem>
+                                    <SelectItem value={asset3}>{asset3}</SelectItem>
                                   </SelectContent>
                                 </Select>
                                 <FormControl>
