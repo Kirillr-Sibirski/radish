@@ -6,7 +6,7 @@ use scrypto::prelude::*;
 #[derive(NonFungibleData, ScryptoSbor, Clone)]
 struct Borrower {
     #[mutable]
-    collateral: HashMap<ResourceAddress, Decimal>,
+    collateral: HashMap<ResourceAddress, Decimal>, // Potentially should be replaced with KeyValueStore
     #[mutable]
     debt: Decimal,
 }
@@ -21,6 +21,8 @@ struct EstimateLoanEvent {
 #[blueprint]
 #[events(EstimateLoanEvent)]
 mod radish {
+    use std::collections::HashMap;
+
     enable_method_auth! {
         roles {
             borrower => updatable_by: [OWNER];
@@ -28,7 +30,7 @@ mod radish {
         methods {
             estimate_loan => PUBLIC;
             get_loan => PUBLIC;
-            repay_loan => restrict_to: [borrower];
+            estimate_repay => restrict_to: [borrower];
         }
     }
 
@@ -140,6 +142,7 @@ mod radish {
             (component, owner_badge)
         }
 
+        // HashMap alright here since max 3-4 K-V pairs passed
         pub fn estimate_loan(&self, collateral: HashMap<ResourceAddress, Decimal>) -> Decimal {
             info!("[estimate_loan] collateral: {:?}", collateral);
 
@@ -175,6 +178,7 @@ mod radish {
             estimated_rsh
         }
 
+        // Vec alright here since max 3-4 values passed
         pub fn get_loan(&mut self, collateral: Vec<Bucket>) -> (Bucket, Bucket) {
             assert!(collateral.len() > 0, "No buckets provided");
             info!("[get_loan] Collateral: {:?} {:?}", &collateral, &collateral[0].amount());
@@ -200,8 +204,30 @@ mod radish {
             (borrower_badge, self.radish_vault.take(estimated_rsh))
         }
 
-        pub fn repay_loan(&mut self) {
-            // TODO: Pass Proof
+        pub fn estimate_repay(&self, borrower_badge: Bucket, repayment: Decimal) -> HashMap<ResourceAddress, Decimal> {
+            assert_eq!(borrower_badge.resource_address(), self.borrower_manager.address(), "Invalid borrower badge");
+            assert_eq!(borrower_badge.amount(), Decimal::ZERO, "Only a single borrower badge must be provided");
+
+            assert!(repayment >= Decimal::ZERO, "Cannot provide negative Radish for repayment");
+            
+            let borrower_data: Borrower = borrower_badge.as_non_fungible().non_fungible().data();
+
+            // If loan fully repaid with potential excess
+            if repayment >= borrower_data.debt {
+                let mut estimate = borrower_data.collateral;
+                estimate.insert(self.radish_resource, repayment.checked_sub(borrower_data.debt).unwrap());
+    
+                info!("[estimate_repay] Estimated repay with excess: {:?}", &estimate);
+                estimate
+            } else {
+                let repayment_ratio = repayment.checked_div(borrower_data.debt).unwrap();
+                let estimate: HashMap<ResourceAddress, Decimal> = borrower_data.collateral.iter()
+                    .map(|(address, amount)| (*address, amount.checked_mul(repayment_ratio).unwrap()))
+                    .collect();
+
+                info!("[estimate_repay] Estimated partial repay with ratio {:?}: {:?}", &repayment_ratio, &estimate);
+                estimate
+            }
         }
     }
 }
