@@ -48,12 +48,12 @@ const dAppDefinitionAddress = "account_tdx_2_12y47w6wsqelpnucy8zjduqdzdq2vq3m56n
 const RSH_Resource = "resource_tdx_2_1th63vvjmc6hd7fjrj94zw6h7uqcx9mx6fy57hnsh3z29gdt2kx2um4";
 
 // Collateral assets - addresses
-const XDR_Resource = "resource_tdx_2_1tknxxxxxxxxxradxrdxxxxxxxxx009923554798xxxxxxxxxtfd2jc";
+const XRD_Resource = "resource_tdx_2_1tknxxxxxxxxxradxrdxxxxxxxxx009923554798xxxxxxxxxtfd2jc";
 const HUG_Resource = "";
 const USDT_Resource = "";
 
 // Collateral assets - tickets
-const asset1 = "XDR"
+const asset1 = "XRD"
 const asset2 = "HUG"
 const asset3 = "USDT"
 
@@ -150,7 +150,7 @@ export default function App() {
 
   async function onEstimateLoan(values: z.infer<typeof formSchema>) {
     const mapCoins = new Map<string, number>([
-      [XDR_Resource, values.amount1 ?? 0], // XRD
+      [XRD_Resource, values.amount1 ?? 0], // XRD
     ]);
     const result = await rdt.walletApi.sendTransaction({
       transactionManifest: generateEstimateLoan(componentAddress, mapCoins),
@@ -190,7 +190,7 @@ export default function App() {
 
   async function onDepositAssets(values: z.infer<typeof formSchema>) {
     const mapCoins = new Map<string, number>([
-      [XDR_Resource, values.amount1 ?? 0], // XRD
+      [XRD_Resource, values.amount1 ?? 0], // XRD
     ]);
     const result = await rdt.walletApi.sendTransaction({
       transactionManifest: generateGetLoan(account.address, componentAddress, mapCoins),

@@ -1,13 +1,17 @@
-import Link from "next/link";
-import { Button } from "@/components/ui/button"; // You can style this button based on your theme
+import { CodeBracketIcon } from '@heroicons/react/24/solid';
 
 export function Footer() {
   return (
-    <footer className="bg-gray-800 text-gray-100 py-10 mt-16">
+    <footer className="bg-[#070707] text-[#fcfff7] py-10 mt-16">
       <div className="container mx-auto px-4 flex flex-col items-center space-y-4">
         <div className="flex space-x-6">
-          <a href="https://github.com/Kirillr-Sibirski/radish" target="_blank" className="hover:text-gray-300">
-            GitHub
+          <a
+            href="https://github.com/Kirillr-Sibirski/radish"
+            target="_blank"
+            className="flex items-center space-x-2 hover:text-[#fb3640]"
+          >
+            <CodeBracketIcon className="w-6 h-6" />
+            <span>GitHub</span>
           </a>
         </div>
       </div>
