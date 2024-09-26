@@ -280,11 +280,8 @@ export default function App() {
   async function handleEstimateWithdraw(e: any) {
     e.preventDefault(); // prevent page reload
     if (radishAmountBack > 0) {
-      const mapCoins = new Map<string, number>([
-        //[XRD_Resource, values.amount1 ?? 0], // XRD
-      ]);
-      const result = await rdt.walletApi.sendTransaction({
-        transactionManifest: generateEstimateLoan(componentAddress, mapCoins),
+      const result = await rdt.walletApi.sendTransaction({ 
+        transactionManifest: "", //generateEstimateLoan(componentAddress, radishAmountBack),   // !!!!!!!!
       });
 
       if (result.isErr()) throw result.error;
@@ -320,10 +317,19 @@ export default function App() {
     }
   };
 
-  // Function to handle withdrawal
-  const handleWithdraw = () => {
-    alert("Withdraw initiated!");
-  };
+  async function handleWithdraw() {
+    const result = await rdt.walletApi.sendTransaction({
+      transactionManifest: "",//generateGetLoan(account.address, componentAddress, radishAmountBack), // !!!!!!!!
+    });
+
+
+    if (result.isErr()) throw result.error;
+
+    const committedDetailsJson = await gatewayApi.transaction.getCommittedDetails(
+      result.value.transactionIntentHash
+    );
+    console.log("Committed: ", committedDetailsJson);
+  }
 
   if (userHasLoan) {
     // HAS A LOAN
