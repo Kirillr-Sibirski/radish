@@ -3,7 +3,9 @@
 
 **Radish** is a decentralized lending platform that leverages the asset-oriented Radix Layer 1 blockchain to enable users to collateralize multiple assets for loans.
 
-![logo](https://github.com/user-attachments/assets/51eb3590-b29d-470f-9ceb-bc00bcb40453)
+<div align="center">
+<img width="40%" src=https://github.com/user-attachments/assets/51eb3590-b29d-470f-9ceb-bc00bcb40453/>
+</div>
 
 This repository contains two primary components: 
 - **Scrypto blueprints** for smart contracts.
