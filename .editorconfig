@@ -1,0 +1,26 @@
+# This file is the top-most EditorConfig file
+root = true
+
+# All Files
+[*]
+charset = utf-8
+indent_style = space
+indent_size = 4
+insert_final_newline = true
+trim_trailing_whitespace = true
+
+# Config files
+[*.{json,json5,webmanifest}]
+indent_size = 2
+[*.{yml,yaml}]
+indent_size = 2
+[*.toml]
+indent_size = 4
+
+# Frontend Files
+[*.{htm,html,js,jsm,ts,tsx,cjs,cts,ctsx,mjs,mts,mtsx,css,sass,scss,less,pcss,svg,vue}]
+indent_size = 2
+
+# Backend Files
+[*.rs]
+indent_size = 4

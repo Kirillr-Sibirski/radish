@@ -1,11 +1,11 @@
-import Image from "next/image";
-import Navbar from "@/components/ui/navbar";
-import { FlipWords } from "@/components/ui/flip-words";
+import Navbar from "@/components/navbar";
 import { Button } from "@/components/ui/button";
-import Link from "next/link";
+import { FlipWords } from "@/components/ui/flip-words";
+import { Footer } from "@/components/ui/footer";
 import { ShootingStars } from "@/components/ui/shooting-stars";
 import { StarsBackground } from "@/components/ui/stars-background";
-import { Footer } from "@/components/ui/footer";
+// import Image from "next/image";
+import Link from "next/link";
 
 export default function Home() {
   const words = ["This is Radish", "Built on Radix"];
@@ -17,14 +17,18 @@ export default function Home() {
       <Navbar />
       <main className="p-4 h-screen">
         <div className="h-full flex justify-center items-center px-4">
-          <div className="text-center text-8xl font-normal" style={{ color: "#070707" }}>
+          <div
+            className="text-center text-8xl font-normal"
+            style={{ color: "#070707" }}
+          >
             <FlipWords words={words} /> <br />
-
             {/* Description with limited width */}
-            <p className="text-xl mt-4 max-w-xl mx-auto" style={{ color: "#070707" }}>
+            <p
+              className="text-xl mt-4 max-w-xl mx-auto"
+              style={{ color: "#070707" }}
+            >
               {description}
             </p>
-
             {/* Button */}
             <Link href="/app">
               <Button

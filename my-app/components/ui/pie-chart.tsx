@@ -12,10 +12,14 @@ import {
 // Define colors for each asset
 const COLORS = ["#FB3640", "#070707", "#748b75"];
 
-export default function CollateralPieChart({ assetsStats }: { assetsStats: any[] }) {
+export default function CollateralPieChart({
+  assetsStats,
+}: {
+  assetsStats: any[];
+}) {
   // Ensure the chartData is calculated based on the assetsStats passed in as props
   const chartData = assetsStats
-    .filter(asset => asset.amount > 0) // Filter out assets with zero amounts
+    .filter((asset) => asset.amount > 0) // Filter out assets with zero amounts
     .map((asset) => ({
       name: asset.assetName,
       value: asset.amount,

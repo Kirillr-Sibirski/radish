@@ -1,4 +1,4 @@
-"use client"
+"use client";
 /* ------------------ Imports ----------------- */
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -19,7 +19,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import Navbar from "@/components/ui/navbar";
+import Navbar from "@/components/navbar";
 import CollateralPieChart from "@/components/ui/pie-chart";
 import {
   Select,
@@ -49,7 +49,6 @@ import {
   generateRepayLoan,
 } from "../manifests";
 
-
 /* ----------------- Constants ---------------- */
 // const componentAddress =
 //   "component_tdx_2_1cz9n0nywtp7qxwsa8zf6y5faaqr5fa26j6ltzkvdmedhz9l343e2xs";
@@ -67,14 +66,14 @@ import {
 //   "resource_tdx_2_1tkuj2rqsa63f8ygkzezgt27trj50srht5e666jaz28j5ss8fasg5kl";
 // const USDT_Resource =
 //   "resource_tdx_2_1t57e50rm28cyqwn26jn336qyhu8nkt8cknacq8rnsn5kul2l3zvjut";
-const componentAddress  = process.env.COMPONENT_ADDR;
+const componentAddress = process.env.COMPONENT_ADDR;
 const definitionAddress = process.env.DAPP_DEFINITION_ADDR;
 
 const borrowerBadge_Resource = process.env.BORROWER_BADGE_ADDR;
 
-const RSH_Resource  = process.env.RSH_ADDR;
-const XRD_Resource  = process.env.XRD_ADDR;
-const HUG_Resource  = process.env.HUG_ADDR;
+const RSH_Resource = process.env.RSH_ADDR;
+const XRD_Resource = process.env.XRD_ADDR;
+const HUG_Resource = process.env.HUG_ADDR;
 const USDT_Resource = process.env.USDT_ADDR;
 
 // Collateral assets - tickets
@@ -83,8 +82,8 @@ const asset2 = "HUG";
 const asset3 = "USDT";
 
 const collateralAssets: Record<string, string> = {
-  XRD_Resource:  asset1, // XRD Resource Address
-  HUG_Resource:  asset2, // HUG Resource Address
+  XRD_Resource: asset1, // XRD Resource Address
+  HUG_Resource: asset2, // HUG Resource Address
   USDT_Resource: asset3, // USDT Resource Address
 };
 
@@ -119,11 +118,11 @@ async function hasBadge(_account: any) {
   if (!_account) return;
 
   const accountState = await gatewayApi.state.getEntityDetailsVaultAggregated(
-    _account.address
+    _account.address,
   );
 
   const getNFTBalance = accountState.non_fungible_resources.items.find(
-    (fr) => fr.resource_address === borrowerBadge_Resource
+    (fr) => fr.resource_address === borrowerBadge_Resource,
   )?.vaults.items[0];
 
   if (!getNFTBalance) {
@@ -132,7 +131,7 @@ async function hasBadge(_account: any) {
 
   const metadata = await gatewayApi.state.getNonFungibleData(
     JSON.parse(JSON.stringify(borrowerBadge_Resource)),
-    [JSON.parse(JSON.stringify(getNFTBalance)).items[0]]
+    [JSON.parse(JSON.stringify(getNFTBalance)).items[0]],
   );
 
   try {
@@ -197,7 +196,7 @@ export default function App() {
       { amount: 0.0, assetName: "" },
       { amount: 0.0, assetName: "" },
       { amount: 0.0, assetName: "" },
-    ]
+    ],
   );
 
   type AssetName = "XRD" | "USDT" | "HUG";
@@ -232,7 +231,7 @@ export default function App() {
                   assetName:
                     collateralAssets[asset.assetName] || `unknown${index + 1}`, // Fallback in case assetName is missing
                 };
-              }
+              },
             );
 
             setAssetsStats(updatedAssets); // Update assetsStats with the new mapped assets
@@ -260,14 +259,14 @@ export default function App() {
 
     const committedDetailsJson =
       await gatewayApi.transaction.getCommittedDetails(
-        result.value.transactionIntentHash
+        result.value.transactionIntentHash,
       );
 
     const committedDetails = JSON.parse(JSON.stringify(committedDetailsJson));
     const events = committedDetails.transaction?.receipt?.events || [];
 
     const estimateLoanEvent = events.find(
-      (event: any) => event.name === "EstimateLoanEvent"
+      (event: any) => event.name === "EstimateLoanEvent",
     );
 
     if (estimateLoanEvent) {
@@ -275,7 +274,7 @@ export default function App() {
 
       if (Array.isArray(data.fields)) {
         const valueField = data.fields.find(
-          (field: any) => field.field_name === "value"
+          (field: any) => field.field_name === "value",
         );
 
         const loanValue = valueField ? valueField.value : null;
@@ -299,7 +298,7 @@ export default function App() {
       transactionManifest: generateGetLoan(
         account.address,
         componentAddress,
-        mapCoins
+        mapCoins,
       ),
     });
 
@@ -307,7 +306,7 @@ export default function App() {
 
     const committedDetailsJson =
       await gatewayApi.transaction.getCommittedDetails(
-        result.value.transactionIntentHash
+        result.value.transactionIntentHash,
       );
     console.log("Committed: ", committedDetailsJson);
     alert("Collateral successfully deposited.");
@@ -332,7 +331,7 @@ export default function App() {
         await gatewayApi.state.getEntityDetailsVaultAggregated(account.address);
 
       const nftID = accountState.non_fungible_resources.items.find(
-        (fr) => fr.resource_address === borrowerBadge_Resource
+        (fr) => fr.resource_address === borrowerBadge_Resource,
       )?.vaults.items[0];
 
       const nftItem = nftID?.items?.length ? nftID.items[0] : ""; // Fallback to an empty string
@@ -342,7 +341,7 @@ export default function App() {
           account.address,
           componentAddress,
           nftItem,
-          radishAmountBack
+          radishAmountBack,
         ), //generateEstimateLoan(componentAddress, radishAmountBack),   // !!!!!!!!
       });
 
@@ -351,14 +350,14 @@ export default function App() {
       console.log("RESUKT: ", result);
       const committedDetailsJson =
         await gatewayApi.transaction.getCommittedDetails(
-          result.value.transactionIntentHash
+          result.value.transactionIntentHash,
         );
 
       const committedDetails = JSON.parse(JSON.stringify(committedDetailsJson));
       const events = committedDetails.transaction?.receipt?.events || [];
 
       const estimateLoanEvent = events.find(
-        (event: any) => event.name === "EstimateRepayEvent"
+        (event: any) => event.name === "EstimateRepayEvent",
       );
 
       if (estimateLoanEvent) {
@@ -380,16 +379,16 @@ export default function App() {
 
   async function handleWithdraw() {
     const accountState = await gatewayApi.state.getEntityDetailsVaultAggregated(
-      account.address
+      account.address,
     );
 
     const nftID = accountState.non_fungible_resources.items.find(
-      (fr) => fr.resource_address === borrowerBadge_Resource
+      (fr) => fr.resource_address === borrowerBadge_Resource,
     )?.vaults.items[0];
 
     if (!nftID) {
       console.error(
-        "NFT ID is undefined. Cannot proceed with the transaction."
+        "NFT ID is undefined. Cannot proceed with the transaction.",
       );
       // Optionally, you can display an alert or a message to the user here.
       return; // Exit the function early to prevent calling the transaction
@@ -404,7 +403,7 @@ export default function App() {
         borrowerBadge_Resource,
         nftItem,
         RSH_Resource,
-        radishAmountBack
+        radishAmountBack,
       ),
     });
     console.log("RESULT: ", result);
@@ -412,7 +411,7 @@ export default function App() {
 
     const committedDetailsJson =
       await gatewayApi.transaction.getCommittedDetails(
-        result.value.transactionIntentHash
+        result.value.transactionIntentHash,
       );
     console.log("Committed: ", committedDetailsJson);
     alert("Loan successfully repaid.");
@@ -660,7 +659,7 @@ export default function App() {
                                   value={field.value || ""}
                                   onChange={(e) =>
                                     field.onChange(
-                                      parseFloat(e.target.value) || 0
+                                      parseFloat(e.target.value) || 0,
                                     )
                                   }
                                 />
@@ -711,7 +710,7 @@ export default function App() {
                                     value={field.value || ""}
                                     onChange={(e) =>
                                       field.onChange(
-                                        parseFloat(e.target.value) || 0
+                                        parseFloat(e.target.value) || 0,
                                       )
                                     }
                                   />
@@ -763,7 +762,7 @@ export default function App() {
                                     value={field.value || ""}
                                     onChange={(e) =>
                                       field.onChange(
-                                        parseFloat(e.target.value) || 0
+                                        parseFloat(e.target.value) || 0,
                                       )
                                     }
                                   />
