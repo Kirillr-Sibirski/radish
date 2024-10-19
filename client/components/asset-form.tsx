@@ -129,7 +129,7 @@ export function AssetForm() {
                         onChange={field.onChange}
                         buttonText="Max"
                         onClick={() => {
-                          alert("Clicked");
+                          alert(`Clicked ${assetsWatch.assets[i].asset}: ${assetsWatch.assets[i].value}`);
                         }}
                       />
                     </FormControl>
@@ -138,15 +138,7 @@ export function AssetForm() {
                 );
               }}
             />
-            <div className="flex flex-row gap-2">
-              <Button
-                className="ml-[-0.3rem] bg-background border-[1px] border-gray-350 text-foreground"
-                onClick={(e) => removeAsset(e, i)}
-              >
-                Max
-              </Button>
-              <Button onClick={(e) => removeAsset(e, i)}> - </Button>
-            </div>
+            <Button onClick={(e) => removeAsset(e, i)}> - </Button>
           </div>
         ))}
         <div className="w-full flex flex-row gap-2 justify-center">
